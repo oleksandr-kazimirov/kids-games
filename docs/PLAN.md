@@ -91,18 +91,21 @@ MENU ──► SETTINGS ──► GAME ──► RESULTS
 ## 6. Game Flow
 
 ```
-Answer submitted
+Child enters digits
        │
        ▼
-   Correct? ──► YES ──► Green flash
-       │               Show congrats (every 5 streak)
-       │               Next problem
+   Correct? ──► YES ──► Auto-submit (no CHECK needed!)
+       │               Green flash → Next problem
+       │               Congrats popup (every 5 streak)
        │
-       └──► NO ──► Red shake
-                   Show correct answer
+       └──► NO ──► Must click CHECK
+                   Red shake + show correct (5 sec)
+                   Big green correct answer
                    Re-queue (practice modes)
                    Next problem
 ```
+
+**Auto-submit:** Correct answers submit instantly — no button click needed!
 
 ---
 
@@ -158,6 +161,8 @@ kids-games/
 - [ ] Settings save correctly
 - [ ] Result mode: `A × B = ?`
 - [ ] Multiplier mode: `? × B = Z`
+- [ ] Auto-submit on correct answer
+- [ ] Wrong answer shows 5 sec with big green correct
 - [ ] Fixed mode ends correctly
 - [ ] Practice modes retry wrong answers
 - [ ] Timer works in all modes

@@ -1145,6 +1145,11 @@
 
             Utils.$('display-answer').textContent = State.currentAnswer;
             Utils.$('display-answer').className = 'answer-display';
+
+            // Auto-submit on correct answer
+            if (State.currentAnswer && parseInt(State.currentAnswer) === State.currentProblem.answer) {
+                this.checkAnswer();
+            }
         },
 
         /** Handle keyboard input */
@@ -1155,6 +1160,11 @@
                 State.currentAnswer += event.key;
                 Utils.$('display-answer').textContent = State.currentAnswer;
                 Utils.$('display-answer').className = 'answer-display';
+
+                // Auto-submit on correct answer
+                if (parseInt(State.currentAnswer) === State.currentProblem.answer) {
+                    this.checkAnswer();
+                }
             } else if (event.key === 'Backspace') {
                 State.currentAnswer = State.currentAnswer.slice(0, -1);
                 Utils.$('display-answer').textContent = State.currentAnswer;
