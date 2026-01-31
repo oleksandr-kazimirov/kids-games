@@ -86,6 +86,7 @@ MENU ──► SETTINGS ──► GAME ──► RESULTS
 │   [    0    ]   [ C ]          │
 ├─────────────────────────────────┤
 │         [ CHECK ]               │
+│         [ FINISH ]              │
 └─────────────────────────────────┘
 ```
 
@@ -173,8 +174,10 @@ kids-games/
 - [ ] Results show mistakes only
 - [ ] Congrats every 5 streak
 - [ ] Voice pronounces numbers as words (English)
+- [ ] Voice pronounces result on correct answer (e.g., "fifty-six, correct!")
 - [ ] Voice pronounces numbers as words (Ukrainian)
 - [ ] Voice language selection works
+- [ ] FINISH button exits game and returns to menu
 - [ ] Works on tablet/phone
 - [ ] Works offline
 

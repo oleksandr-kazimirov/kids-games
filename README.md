@@ -38,6 +38,16 @@ A tablet-optimized multiplication learning game for kids aged 7-9.
 - Responsive design for all screen sizes
 - Touch-friendly for tablets
 
+## Request Changes
+
+Have an idea or found a bug? [Open an issue](https://github.com/oleksandr-kazimirov/kids-games/issues/new) with:
+
+1. **Title** — Short description (e.g., "Add division mode")
+2. **Description** — What you want or what's broken
+3. **Example** — How it should work (optional)
+
+We'll review and respond as soon as possible.
+
 ---
 
 **Powered by Claude AI (Anthropic) and Oleksandr Kazimirov**

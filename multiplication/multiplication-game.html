@@ -579,6 +579,7 @@
             <div id="display-answer" class="answer-display"></div>
             <div class="numpad" id="numpad"></div>
             <button id="btn-check" class="btn btn-primary">CHECK</button>
+            <button id="btn-finish" class="btn btn-outline">FINISH</button>
         </div>
 
         <!-- Results Screen -->
@@ -618,7 +619,7 @@
 
     const CONFIG = {
         TIMING: {
-            CORRECT_DELAY: 500,
+            CORRECT_DELAY: 1500,
             WRONG_DELAY: 5000,
             CONGRATS_DURATION: 1500,
             TIMER_INTERVAL: 1000
@@ -709,17 +710,18 @@
         /** Convert number to words in selected language */
         numberToWords(num) {
             const lang = State.voiceLanguage;
+            const n = parseInt(num, 10) || 0;
 
             const wordsEN = {
-                ones: ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+                ones: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
                        'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen',
                        'eighteen', 'nineteen'],
                 tens: ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'],
-                hundred: 'hundred'
+                hundred: 'one hundred'
             };
 
             const wordsUK = {
-                ones: ['', 'один', 'два', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', "дев'ять", 'десять',
+                ones: ['нуль', 'один', 'два', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', "дев'ять", 'десять',
                        'одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', "п'ятнадцять", 'шістнадцять',
                        'сімнадцять', 'вісімнадцять', "дев'ятнадцять"],
                 tens: ['', '', 'двадцять', 'тридцять', 'сорок', "п'ятдесят", 'шістдесят', 'сімдесят',
@@ -729,11 +731,10 @@
 
             const words = lang === 'uk' ? wordsUK : wordsEN;
 
-            if (num === 0) return lang === 'uk' ? 'нуль' : 'zero';
-            if (num < 20) return words.ones[num];
-            if (num < 100) {
-                const t = Math.floor(num / 10);
-                const o = num % 10;
+            if (n < 20) return words.ones[n];
+            if (n < 100) {
+                const t = Math.floor(n / 10);
+                const o = n % 10;
                 return words.tens[t] + (o > 0 ? (lang === 'uk' ? ' ' : '-') + words.ones[o] : '');
             }
             // 100
@@ -765,8 +766,11 @@
         },
 
         /** Get speech text for correct answer */
-        getCorrectSpeech() {
-            return State.voiceLanguage === 'uk' ? 'Правильно!' : 'Correct!';
+        getCorrectSpeech(answer) {
+            const answerWord = this.numberToWords(answer);
+            return State.voiceLanguage === 'uk'
+                ? `${answerWord}, правильно!`
+                : `${answerWord}, correct!`;
         },
 
         /** Get speech text for wrong answer */
@@ -1192,7 +1196,7 @@
                 State.masteredPairs.add(State.currentProblem.key);
                 // Show checkmark for correct answer
                 answerEl.innerHTML = `${State.currentAnswer} <span style="color:var(--success);font-size:48px;margin-left:12px">✓</span>`;
-                Utils.speak(Utils.getCorrectSpeech());
+                Utils.speak(Utils.getCorrectSpeech(State.currentProblem.answer));
                 if (State.streak > 0 && State.streak % 5 === 0) {
                     setTimeout(() => UI.showCongrats(), 300);
                 }
@@ -1338,6 +1342,14 @@
         // Game buttons
         Utils.$('btn-start').addEventListener('click', () => Game.start());
         Utils.$('btn-check').addEventListener('click', () => Game.checkAnswer());
+        Utils.$('btn-finish').addEventListener('click', () => {
+            if (State.timerInterval) {
+                clearInterval(State.timerInterval);
+                State.timerInterval = null;
+            }
+            window.speechSynthesis && window.speechSynthesis.cancel();
+            UI.showScreen('menu');
+        });
         Utils.$('btn-play-again').addEventListener('click', () => {
             Utils.$('display-score-summary').classList.remove('success');
             UI.showScreen('settings');

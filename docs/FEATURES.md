@@ -133,7 +133,7 @@ Scenario A: Correct answer auto-submits
   Then answer display shows "56"
     And auto-submit is true (56 === 56)
     And display shows "56 checkmark"
-    And voice says "Correct!"
+    And voice says "fifty-six, correct!"
 
 Scenario B: Wrong answer requires CHECK button
   Given current problem answer is 56
@@ -161,8 +161,8 @@ Scenario B: Voice enabled with English
     And language is "English"
   When problem "7 x 8 = ?" is displayed
   Then voice says "seven times eight"
-  When user answers correct
-  Then voice says "Correct!"
+  When user answers correct (56)
+  Then voice says "fifty-six, correct!"
   When user answers incorrect
   Then voice says "The answer is fifty-six"
 
@@ -171,8 +171,8 @@ Scenario C: Voice enabled with Ukrainian
     And language is "Ukrainian"
   When problem "7 x 8 = ?" is displayed
   Then voice says "sim na visim"
-  When user answers correct
-  Then voice says "Pravylno!"
+  When user answers correct (56)
+  Then voice says "piatdesiat shist, pravylno!"
   When user answers incorrect
   Then voice says "Vidpovid: piatdesiat shist"
 
@@ -270,6 +270,21 @@ Scenario B: Streak resets on wrong answer
   When user answers incorrectly
   Then streak becomes 0
     And congrats popup does not appear
+```
+
+---
+
+## Feature: Finish Game Early
+
+```gherkin
+Scenario A: Exit game before completion
+  Given game is in progress
+    And timer is running
+  When user clicks FINISH button
+  Then timer stops
+    And speech is cancelled
+    And user returns to menu screen
+    And no results are saved
 ```
 
 ---
