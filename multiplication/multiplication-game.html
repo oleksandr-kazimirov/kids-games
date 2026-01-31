@@ -274,9 +274,9 @@
             border-radius: 8px;
         }
         .problem .answer-slot.wrong {
-            color: var(--error);
-            border-color: var(--error);
-            background: rgba(229,57,53,.15);
+            color: rgba(255,0,0,.5);
+            border-color: rgba(255,0,0,.5);
+            background: rgba(255,0,0,.1);
             border-radius: 8px;
             animation: shake .4s ease;
         }
@@ -792,7 +792,7 @@
     // =========================================================================
 
     const CONFIG = {
-        TIMING: { CORRECT_DELAY: 500, WRONG_DELAY: 1000, AUTO_SUBMIT_DELAY: 2000, CONGRATS_DURATION: 1500, TIMER_INTERVAL: 1000 },
+        TIMING: { CORRECT_DELAY: 500, WRONG_SHOW_DELAY: 1700, WRONG_CORRECT_DELAY: 1700, AUTO_SUBMIT_DELAY: 2000, CONGRATS_DURATION: 1500, TIMER_INTERVAL: 1000, PROBLEM_DISPLAY_DELAY: 500, MIC_START_DELAY: 500, MIC_RETRY_DELAY: 250 },
         GAME: { MIN_NUMBER: 2, MAX_NUMBER: 10, MULTIPLIER_RANGE: [1, 10], RETRY_POSITION: [3, 7] },
         CONGRATS: [['🌟','Great job!'],['🎉','Amazing!'],['🏆','Fantastic!'],['⭐','Super star!'],['🚀','Excellent!'],['🔥',"You're on fire!"],['👏','Keep it up!'],['💪','Math champion!'],['🎯','Brilliant!'],['✨','Outstanding!']]
     };
@@ -1163,7 +1163,7 @@
         async displayProblem(onComplete) {
             this.updateProblemDisplay('');
             await this.speech.speak(this.state.currentProblem.getSpeechText(this.state.voiceLanguage));
-            if (onComplete) setTimeout(onComplete, 500);
+            if (onComplete) setTimeout(onComplete, CONFIG.TIMING.PROBLEM_DISPLAY_DELAY);
         }
 
         updateProgress(session) {
@@ -1285,19 +1285,17 @@
             if (!this.recognizer?.supported || this.state.isProcessing) return;
             this.recognizer.stop();
             this.ui.setMicListening(true);
-            this.tryStartMic(retries);
+            setTimeout(() => this.tryStartMic(retries), CONFIG.TIMING.MIC_START_DELAY);
         }
 
         tryStartMic(retries) {
-            setTimeout(() => {
-                if (this.state.isProcessing) return;
-                if (this.recognizer.start()) return;
-                if (retries > 0) {
-                    this.tryStartMic(retries - 1);
-                } else {
-                    this.ui.setMicListening(false);
-                }
-            }, 250);
+            if (this.state.isProcessing) return;
+            if (this.recognizer.start()) return;
+            if (retries > 0) {
+                setTimeout(() => this.tryStartMic(retries - 1), CONFIG.TIMING.MIC_RETRY_DELAY);
+            } else {
+                this.ui.setMicListening(false);
+            }
         }
 
         async checkAnswer() {
@@ -1315,15 +1313,17 @@
                     this.state.masteredPairs.add(problem.key);
                     await this.speech.speak(this.state.voicePhrase('voiceCorrect', problem.answer));
                     if (this.state.streak % 5 === 0) this.ui.showCongrats();
+                    await new Promise(r => setTimeout(r, CONFIG.TIMING.CORRECT_DELAY));
                 } else {
                     this.state.streak = 0;
                     this.state.mistakes++;
-                    await this.speech.speak(this.state.voicePhrase('voiceWrong', problem.answer));
+                    await new Promise(r => setTimeout(r, CONFIG.TIMING.WRONG_SHOW_DELAY));
                     this.ui.updateProblemDisplay(problem.answer, 'correct');
+                    await this.speech.speak(this.state.voicePhrase('voiceWrong', problem.answer));
                     const [minPos, maxPos] = CONFIG.GAME.RETRY_POSITION;
                     this.state.problemQueue.splice(Math.min(this.state.problemQueue.length, Utility.randomInt(minPos, maxPos)), 0, new Problem(problem.a, problem.b, this.state.gameMode));
+                    await new Promise(r => setTimeout(r, CONFIG.TIMING.WRONG_CORRECT_DELAY));
                 }
-                await new Promise(r => setTimeout(r, isCorrect ? CONFIG.TIMING.CORRECT_DELAY : CONFIG.TIMING.WRONG_DELAY));
                 this.state.problemQueue.length === 0 ? this.endGame() : this.nextProblem();
             } finally {
                 this.state.isProcessing = false;
