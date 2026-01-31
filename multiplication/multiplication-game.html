@@ -258,25 +258,32 @@
         }
 
         .problem .unknown { color: var(--primary); font-weight: 800; }
-
-        .answer-display {
-            text-align: center;
-            font-size: 42px;
-            font-weight: 700;
-            color: var(--gray-800);
-            padding: 20px;
-            margin-bottom: 20px;
-            background: var(--gray-100);
-            border-radius: var(--radius-lg);
-            min-height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background .3s, transform .1s;
+        .problem .answer-slot {
+            display: inline-block;
+            min-width: 60px;
+            padding: 4px 12px;
+            border-bottom: 4px solid var(--primary);
+            color: var(--primary);
+            font-weight: 800;
+            transition: all .2s;
         }
-
-        .answer-display.correct { background: #E8F5E9; color: var(--success-dark); }
-        .answer-display.wrong { background: #FFEBEE; color: var(--error-dark); animation: shake .4s ease; }
+        .problem .answer-slot.correct {
+            color: var(--success);
+            border-color: var(--success);
+            background: rgba(76,175,80,.15);
+            border-radius: 8px;
+        }
+        .problem .answer-slot.wrong {
+            color: var(--error);
+            border-color: var(--error);
+            background: rgba(229,57,53,.15);
+            border-radius: 8px;
+            animation: shake .4s ease;
+        }
+        .problem.show-correct .answer-slot {
+            color: var(--success);
+            border-color: var(--success);
+        }
 
         /* Numpad */
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
@@ -720,7 +727,6 @@
                 </div>
             </div>
             <div id="display-problem" class="problem"></div>
-            <div id="display-answer" class="answer-display"></div>
             <div class="numpad" id="numpad"></div>
             <div class="input-row">
                 <button id="btn-check" class="btn btn-success">CHECK</button>
@@ -990,10 +996,12 @@
             }
         }
 
-        getDisplayHTML() {
-            const aDisp = this.hidden === 'a' ? '<span class="unknown">?</span>' : this.a;
-            const bDisp = this.hidden === 'b' ? '<span class="unknown">?</span>' : this.b;
-            return this.hidden ? `${aDisp} × ${bDisp} = ${this.result}` : `${this.a} × ${this.b} = <span class="unknown">?</span>`;
+        getDisplayHTML(input = '', state = '') {
+            const stateClass = state ? ` ${state}` : '';
+            const inputHTML = `<span class="answer-slot${stateClass}">${input || '_'}</span>`;
+            if (this.hidden === 'a') return `${inputHTML} × ${this.b} = ${this.result}`;
+            if (this.hidden === 'b') return `${this.a} × ${inputHTML} = ${this.result}`;
+            return `${this.a} × ${this.b} = ${inputHTML}`;
         }
 
         getSpeechText(lang) {
@@ -1153,7 +1161,7 @@
         }
 
         async displayProblem(onComplete) {
-            Utility.$('display-problem').innerHTML = this.state.currentProblem.getDisplayHTML();
+            this.updateProblemDisplay('');
             await this.speech.speak(this.state.currentProblem.getSpeechText(this.state.voiceLanguage));
             if (onComplete) setTimeout(onComplete, 500);
         }
@@ -1221,8 +1229,11 @@
             this.showScreen('results');
         }
 
-        resetAnswerDisplay() { const el = Utility.$('display-answer'); el.textContent = ''; el.className = 'answer-display'; }
-        updateAnswerDisplay(value) { const el = Utility.$('display-answer'); el.textContent = value; el.className = 'answer-display'; }
+        resetAnswerDisplay() { this.updateProblemDisplay(''); }
+        updateAnswerDisplay(value) { this.updateProblemDisplay(value); }
+        updateProblemDisplay(input, state = '') {
+            Utility.$('display-problem').innerHTML = this.state.currentProblem.getDisplayHTML(input, state);
+        }
         setMicListening(listening) { Utility.$('btn-mic')?.classList.toggle('listening', listening); }
 
         generateButtons(containerId, onClick) {
@@ -1297,19 +1308,17 @@
                 const problem = this.state.currentProblem;
                 const isCorrect = userAnswer === problem.answer;
                 this.state.history.push({ problem, userAnswer, correct: isCorrect });
-                const answerEl = Utility.$('display-answer');
-                answerEl.classList.add(isCorrect ? 'correct' : 'wrong');
+                this.ui.updateProblemDisplay(userAnswer, isCorrect ? 'correct' : 'wrong');
                 if (isCorrect) {
                     this.state.streak++;
                     this.state.masteredPairs.add(problem.key);
-                    answerEl.innerHTML = `${userAnswer} <span style="color:var(--success);font-size:48px;margin-left:12px">✓</span>`;
                     await this.speech.speak(this.state.voicePhrase('voiceCorrect', problem.answer));
                     if (this.state.streak % 5 === 0) this.ui.showCongrats();
                 } else {
                     this.state.streak = 0;
                     this.state.mistakes++;
-                    answerEl.innerHTML = `<s style="color:var(--gray-400)">${userAnswer}</s> <span style="color:var(--gray-400);font-size:24px">→</span> <span style="color:var(--success);font-size:56px;font-weight:800">${problem.answer}</span>`;
                     await this.speech.speak(this.state.voicePhrase('voiceWrong', problem.answer));
+                    this.ui.updateProblemDisplay(problem.answer, 'correct');
                     const [minPos, maxPos] = CONFIG.GAME.RETRY_POSITION;
                     this.state.problemQueue.splice(Math.min(this.state.problemQueue.length, Utility.randomInt(minPos, maxPos)), 0, new Problem(problem.a, problem.b, this.state.gameMode));
                 }
