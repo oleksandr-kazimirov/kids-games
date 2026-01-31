@@ -188,6 +188,37 @@
         }
 
         .btn-outline:active { background: var(--gray-100); }
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), var(--success-dark));
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(76,175,80,.4);
+        }
+        .btn-link {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--gray-400);
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            transition: color .2s;
+        }
+        .btn-link:hover, .btn-link:active { color: var(--gray-600); }
+        .voice-btn {
+            padding: 6px 10px;
+            font-size: 18px;
+            background: #fff;
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all .2s;
+            margin-left: auto;
+        }
+        .voice-btn:active { transform: scale(.95); }
+        .voice-btn.off { opacity: 0.4; }
 
         /* Game Screen */
         .progress-bar {
@@ -202,7 +233,6 @@
 
         .progress-text, .mistakes, .remaining, .timer { font-size: 18px; font-weight: 500; }
 
-        .voice-toggle.off { opacity: 0.5; border-color: var(--gray-300); color: var(--gray-400); }
         .progress-text { color: var(--gray-600); }
         .timer { color: var(--warning); font-family: monospace; font-size: 20px; }
         .mistakes { color: var(--error); }
@@ -630,8 +660,8 @@
                 </div>
             </div>
 
-            <button id="btn-start" class="btn btn-primary">START</button>
-            <button id="btn-settings-back" class="btn btn-outline">BACK</button>
+            <button id="btn-start" class="btn btn-success">START</button>
+            <button id="btn-settings-back" class="btn-link">Back</button>
         </div>
 
         <!-- Learn Screen -->
@@ -643,7 +673,7 @@
                 <div class="table-title" id="table-title"></div>
                 <div class="table-content" id="table-content"></div>
             </div>
-            <button id="btn-learn-back" class="btn btn-outline">BACK TO MENU</button>
+            <button id="btn-learn-back" class="btn-link">Back to Menu</button>
         </div>
 
         <!-- Game Screen -->
@@ -652,15 +682,13 @@
                 <span id="display-progress" class="progress-text"></span>
                 <span id="display-timer" class="timer">00:00</span>
                 <span id="display-mistakes"></span>
+                <button id="btn-voice-toggle" class="voice-btn">🔊</button>
             </div>
             <div id="display-problem" class="problem"></div>
             <div id="display-answer" class="answer-display"></div>
             <div class="numpad" id="numpad"></div>
-            <button id="btn-check" class="btn btn-primary">CHECK</button>
-            <div style="display:flex;gap:12px;align-items:stretch">
-                <button id="btn-finish" class="btn btn-outline" style="flex:1;margin-bottom:0">FINISH</button>
-                <button id="btn-voice-toggle" class="btn btn-outline voice-toggle" style="width:auto;padding-left:20px;padding-right:20px">🔊</button>
-            </div>
+            <button id="btn-check" class="btn btn-success">CHECK</button>
+            <button id="btn-finish" class="btn-link">Finish</button>
         </div>
 
         <!-- Results Screen -->
@@ -672,8 +700,8 @@
                 <div id="display-percent" class="score-percent"></div>
             </div>
             <div id="results-list" class="results-list"></div>
-            <button id="btn-play-again" class="btn btn-primary">PLAY AGAIN</button>
-            <button id="btn-results-back" class="btn btn-outline">BACK TO MENU</button>
+            <button id="btn-play-again" class="btn btn-success">PLAY AGAIN</button>
+            <button id="btn-results-back" class="btn-link">Back to Menu</button>
         </div>
     </div>
 
@@ -727,8 +755,8 @@
     };
 
     const TRANSLATIONS = {
-        en: { menuTitle:'Multiplication Game',play:'PLAY',learn:'LEARN',settings:'Game Settings',practiceUpTo:'Practice numbers up to:',questionType:'Question Type:',findResult:'Find the Result (A × B = ?)',findMultiplier:'Find the Multiplier (? × B = Z)',sessionType:'Session Type:',fixedTasks:'Fixed Tasks',practiceAll:'Practice All Tables',practiceOne:'Practice One Table',selectTable:'Select table to practice:',tasks:'Tasks:',maxMistakes:'Max Mistakes:',unlimited:'Unlimited',start:'START',back:'BACK',backToMenu:'BACK TO MENU',check:'CHECK',finish:'FINISH',learnTables:'Learn Tables',learnHint:'Select a number to see its multiplication table:',tableOf:'Table of',results:'Results',playAgain:'PLAY AGAIN',mastered:'Mastered:',mistakes:'Mistakes:',left:'Left:',practiceAllInfo:'Practice All: Tables 2-{max} ({total} tasks)',perfectMessage:'Perfect! No mistakes!',completedMessage:'Completed with {count} mistake(s) corrected!',noMistakes:'No mistakes! Perfect!',masteredIn:'{label} mastered in',aboutTitle:'About',aboutGoal:'A fun game to help children learn multiplication tables through practice.',aboutAuthor:'by O. Kazimirov',voiceInstallTitle:'Ukrainian Voice Not Found',voiceInstallText:'To hear Ukrainian pronunciation, please install a Ukrainian voice:',voiceInstall:{android:'<b>Android:</b><br>Settings → System → Languages → Text-to-Speech',ios:'<b>iPad/iPhone:</b><br>Settings → Accessibility → Spoken Content → Voices',windows:'<b>Windows:</b><br>Settings → Time & Language → Speech',other:'Check your device Text-to-Speech settings.'}},
-        uk: { menuTitle:'Гра на Множення',play:'ГРАТИ',learn:'ВЧИТИ',settings:'Налаштування',practiceUpTo:'Числа до:',questionType:'Тип питання:',findResult:'Знайти результат (A × B = ?)',findMultiplier:'Знайти множник (? × B = Z)',sessionType:'Тип сесії:',fixedTasks:'Фіксовані завдання',practiceAll:'Всі таблиці',practiceOne:'Одна таблиця',selectTable:'Оберіть таблицю:',tasks:'Завдань:',maxMistakes:'Макс. помилок:',unlimited:'Без ліміту',start:'СТАРТ',back:'НАЗАД',backToMenu:'ДО МЕНЮ',check:'ПЕРЕВІРИТИ',finish:'ЗАВЕРШИТИ',learnTables:'Вивчення таблиць',learnHint:'Оберіть число щоб побачити таблицю множення:',tableOf:'Таблиця на',results:'Результати',playAgain:'ГРАТИ ЗНОВУ',mastered:'Вивчено:',mistakes:'Помилок:',left:'Лишилось:',practiceAllInfo:'Всі таблиці: 2-{max} ({total} завдань)',perfectMessage:'Чудово! Без помилок!',completedMessage:'Завершено з {count} виправленими помилками!',noMistakes:'Без помилок! Чудово!',masteredIn:'{label} вивчено за',aboutTitle:'Про гру',aboutGoal:'Весела гра для вивчення таблиці множення.',aboutAuthor:'автор О. Казіміров',voiceInstallTitle:'Український голос не знайдено',voiceInstallText:'Щоб чути українську вимову, встановіть український голос:',voiceInstall:{android:'<b>Android:</b><br>Налаштування → Система → Мови → Синтез мовлення',ios:'<b>iPad/iPhone:</b><br>Налаштування → Доступність → Усний вміст → Голоси',windows:'<b>Windows:</b><br>Параметри → Час і мова → Мовлення',other:'Перевірте налаштування синтезу мовлення.'}}
+        en: { menuTitle:'Multiplication Game',play:'PLAY',learn:'LEARN',settings:'Game Settings',practiceUpTo:'Practice numbers up to:',questionType:'Question Type:',findResult:'Find the Result (A × B = ?)',findMultiplier:'Find the Multiplier (? × B = Z)',sessionType:'Session Type:',fixedTasks:'Fixed Tasks',practiceAll:'Practice All Tables',practiceOne:'Practice One Table',selectTable:'Select table to practice:',tasks:'Tasks:',maxMistakes:'Max Mistakes:',unlimited:'Unlimited',start:'START',back:'Back',backToMenu:'Back to Menu',check:'CHECK',finish:'Finish',learnTables:'Learn Tables',learnHint:'Select a number to see its multiplication table:',tableOf:'Table of',results:'Results',playAgain:'PLAY AGAIN',mastered:'Mastered:',mistakes:'Mistakes:',left:'Left:',practiceAllInfo:'Practice All: Tables 2-{max} ({total} tasks)',perfectMessage:'Perfect! No mistakes!',completedMessage:'Completed with {count} mistake(s) corrected!',noMistakes:'No mistakes! Perfect!',masteredIn:'{label} mastered in',aboutTitle:'About',aboutGoal:'A fun game to help children learn multiplication tables through practice.',aboutAuthor:'by O. Kazimirov',voiceInstallTitle:'Ukrainian Voice Not Found',voiceInstallText:'To hear Ukrainian pronunciation, please install a Ukrainian voice:',voiceInstall:{android:'<b>Android:</b><br>Settings → System → Languages → Text-to-Speech',ios:'<b>iPad/iPhone:</b><br>Settings → Accessibility → Spoken Content → Voices',windows:'<b>Windows:</b><br>Settings → Time & Language → Speech',other:'Check your device Text-to-Speech settings.'}},
+        uk: { menuTitle:'Гра на Множення',play:'ГРАТИ',learn:'ВЧИТИ',settings:'Налаштування',practiceUpTo:'Числа до:',questionType:'Тип питання:',findResult:'Знайти результат (A × B = ?)',findMultiplier:'Знайти множник (? × B = Z)',sessionType:'Тип сесії:',fixedTasks:'Фіксовані завдання',practiceAll:'Всі таблиці',practiceOne:'Одна таблиця',selectTable:'Оберіть таблицю:',tasks:'Завдань:',maxMistakes:'Макс. помилок:',unlimited:'Без ліміту',start:'СТАРТ',back:'Назад',backToMenu:'До меню',check:'ПЕРЕВІРИТИ',finish:'Завершити',learnTables:'Вивчення таблиць',learnHint:'Оберіть число щоб побачити таблицю множення:',tableOf:'Таблиця на',results:'Результати',playAgain:'ГРАТИ ЗНОВУ',mastered:'Вивчено:',mistakes:'Помилок:',left:'Лишилось:',practiceAllInfo:'Всі таблиці: 2-{max} ({total} завдань)',perfectMessage:'Чудово! Без помилок!',completedMessage:'Завершено з {count} виправленими помилками!',noMistakes:'Без помилок! Чудово!',masteredIn:'{label} вивчено за',aboutTitle:'Про гру',aboutGoal:'Весела гра для вивчення таблиці множення.',aboutAuthor:'автор О. Казіміров',voiceInstallTitle:'Український голос не знайдено',voiceInstallText:'Щоб чути українську вимову, встановіть український голос:',voiceInstall:{android:'<b>Android:</b><br>Налаштування → Система → Мови → Синтез мовлення',ios:'<b>iPad/iPhone:</b><br>Налаштування → Доступність → Усний вміст → Голоси',windows:'<b>Windows:</b><br>Параметри → Час і мова → Мовлення',other:'Перевірте налаштування синтезу мовлення.'}}
     };
 
     // =========================================================================
