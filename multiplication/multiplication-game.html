@@ -201,6 +201,18 @@
         }
 
         .progress-text, .mistakes, .remaining, .timer { font-size: 18px; font-weight: 500; }
+
+        .voice-toggle {
+            padding: 4px 8px;
+            font-size: 16px;
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-sm);
+            background: #fff;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .voice-toggle:active { transform: scale(.95); }
+        .voice-toggle.off { opacity: 0.5; }
         .progress-text { color: var(--gray-600); }
         .timer { color: var(--warning); font-family: monospace; font-size: 20px; }
         .mistakes { color: var(--error); }
@@ -655,7 +667,10 @@
             <div id="display-answer" class="answer-display"></div>
             <div class="numpad" id="numpad"></div>
             <button id="btn-check" class="btn btn-primary">CHECK</button>
-            <button id="btn-finish" class="btn btn-outline">FINISH</button>
+            <div style="display:flex;gap:12px">
+                <button id="btn-finish" class="btn btn-outline" style="flex:1">FINISH</button>
+                <button id="btn-voice-toggle" class="voice-toggle">🔊</button>
+            </div>
         </div>
 
         <!-- Results Screen -->
@@ -692,6 +707,17 @@
         </div>
     </div>
 
+    <!-- Voice Install Overlay -->
+    <div id="voice-install-overlay" class="about-overlay">
+        <div class="about-popup" style="max-width:360px;text-align:left">
+            <button id="btn-voice-install-close" class="about-close">×</button>
+            <h3 id="voice-install-title" style="text-align:center">Ukrainian Voice Not Found</h3>
+            <p id="voice-install-text" class="about-text" style="margin-bottom:12px"></p>
+            <div id="voice-install-instructions" style="font-size:14px;color:var(--gray-600);line-height:1.6"></div>
+            <button id="btn-voice-install-ok" class="btn btn-primary" style="margin-top:16px">OK</button>
+        </div>
+    </div>
+
 <script>
 /**
  * Multiplication Game for Kids
@@ -706,8 +732,8 @@
 
     const CONFIG = {
         TIMING: {
-            CORRECT_DELAY: 1500,
-            WRONG_DELAY: 5000,
+            CORRECT_DELAY: 1700,
+            WRONG_DELAY: 2700,
             CONGRATS_DURATION: 1500,
             TIMER_INTERVAL: 1000
         },
@@ -773,7 +799,13 @@
             masteredIn: '{label} mastered in',
             aboutTitle: 'About',
             aboutGoal: 'A fun game to help children learn multiplication tables through practice. Answer problems, learn from mistakes, and master all tables!',
-            aboutAuthor: 'by O. Kazimirov'
+            aboutAuthor: 'by O. Kazimirov',
+            voiceInstallTitle: 'Ukrainian Voice Not Found',
+            voiceInstallText: 'To hear Ukrainian pronunciation, please install a Ukrainian voice on your device:',
+            voiceInstallAndroid: '<b>Android:</b><br>Settings → System → Languages → Text-to-Speech → Install Ukrainian voice',
+            voiceInstallIOS: '<b>iPad/iPhone:</b><br>Settings → Accessibility → Spoken Content → Voices → Ukrainian → Download',
+            voiceInstallWindows: '<b>Windows:</b><br>Settings → Time & Language → Speech → Add voices → Ukrainian',
+            voiceInstallOther: 'Check your device settings for Text-to-Speech or Voice options.'
         },
         uk: {
             menuTitle: 'Гра на Множення',
@@ -812,7 +844,13 @@
             masteredIn: '{label} вивчено за',
             aboutTitle: 'Про гру',
             aboutGoal: 'Весела гра для вивчення таблиці множення. Розв\'язуй приклади, вчись на помилках та опануй всі таблиці!',
-            aboutAuthor: 'автор О. Казіміров'
+            aboutAuthor: 'автор О. Казіміров',
+            voiceInstallTitle: 'Український голос не знайдено',
+            voiceInstallText: 'Щоб чути українську вимову, встановіть український голос на пристрої:',
+            voiceInstallAndroid: '<b>Android:</b><br>Налаштування → Система → Мови → Синтез мовлення → Встановити українську',
+            voiceInstallIOS: '<b>iPad/iPhone:</b><br>Налаштування → Доступність → Усний вміст → Голоси → Українська → Завантажити',
+            voiceInstallWindows: '<b>Windows:</b><br>Параметри → Час і мова → Мовлення → Додати голоси → Українська',
+            voiceInstallOther: 'Перевірте налаштування синтезу мовлення на вашому пристрої.'
         }
     };
 
@@ -853,9 +891,14 @@
             return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         },
 
-        /** Speak text using Web Speech API (if enabled) */
+        /** Speak text using Web Speech API (if enabled). Returns Promise that resolves when done. */
         speak(text, lang = null) {
-            if (State.voiceEnabled && 'speechSynthesis' in window) {
+            return new Promise(resolve => {
+                if (!State.voiceEnabled || !('speechSynthesis' in window)) {
+                    resolve();
+                    return;
+                }
+
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 const language = lang || State.voiceLanguage;
@@ -873,10 +916,25 @@
                     utterance.lang = language === 'uk' ? 'uk-UA' : 'en-US';
                 }
 
-                utterance.rate = 0.9;
+                utterance.rate = 0.85;
                 utterance.pitch = 1.1;
+
+                let resolved = false;
+                const done = () => {
+                    if (!resolved) {
+                        resolved = true;
+                        clearTimeout(fallbackTimer);
+                        resolve();
+                    }
+                };
+
+                utterance.onend = done;
+                utterance.onerror = done;
                 window.speechSynthesis.speak(utterance);
-            }
+
+                // Fallback timeout in case onend doesn't fire (3 seconds max)
+                const fallbackTimer = setTimeout(done, 3000);
+            });
         },
 
         /** Convert number to words in selected language */
@@ -951,6 +1009,45 @@
             return State.voiceLanguage === 'uk'
                 ? `Відповідь: ${answerWord}`
                 : `The answer is ${answerWord}`;
+        },
+
+        /** Check if a voice for the given language is available */
+        hasVoice(lang) {
+            if (!('speechSynthesis' in window)) return false;
+            const voices = window.speechSynthesis.getVoices();
+            const targetLang = lang === 'uk' ? 'uk' : 'en';
+            return voices.some(v => v.lang.startsWith(targetLang) || v.lang.includes(targetLang));
+        },
+
+        /** Detect platform */
+        getPlatform() {
+            const ua = navigator.userAgent;
+            if (/iPad|iPhone|iPod/.test(ua)) return 'ios';
+            if (/Android/.test(ua)) return 'android';
+            if (/Windows/.test(ua)) return 'windows';
+            return 'other';
+        },
+
+        /** Show voice install instructions */
+        showVoiceInstallHelp() {
+            const t = TRANSLATIONS[State.uiLanguage];
+            const platform = this.getPlatform();
+
+            Utils.$('voice-install-title').textContent = t.voiceInstallTitle;
+            Utils.$('voice-install-text').textContent = t.voiceInstallText;
+
+            let instructions = '';
+            if (platform === 'android') {
+                instructions = t.voiceInstallAndroid;
+            } else if (platform === 'ios') {
+                instructions = t.voiceInstallIOS;
+            } else if (platform === 'windows') {
+                instructions = t.voiceInstallWindows;
+            } else {
+                instructions = t.voiceInstallOther;
+            }
+            Utils.$('voice-install-instructions').innerHTML = instructions;
+            Utils.$('voice-install-overlay').classList.add('show');
         }
     };
 
@@ -976,6 +1073,7 @@
         streak: 0,
         currentAnswer: '',
         currentProblem: null,
+        isProcessing: false,
 
         // Collections
         usedPairs: new Set(),
@@ -995,6 +1093,7 @@
             this.streak = 0;
             this.currentAnswer = '';
             this.currentProblem = null;
+            this.isProcessing = false;
             this.usedPairs.clear();
             this.problemQueue = [];
             this.masteredPairs.clear();
@@ -1122,6 +1221,11 @@
             State.uiLanguage = lang;
             State.voiceLanguage = lang;
             const t = TRANSLATIONS[lang];
+
+            // Check if Ukrainian voice is available
+            if (lang === 'uk' && !Utils.hasVoice('uk')) {
+                setTimeout(() => Utils.showVoiceInstallHelp(), 300);
+            }
 
             // Menu
             Utils.$('menu-title').textContent = t.menuTitle;
@@ -1422,8 +1526,9 @@
         },
 
         /** Check the current answer */
-        checkAnswer() {
-            if (!State.currentAnswer) return;
+        async checkAnswer() {
+            if (!State.currentAnswer || State.isProcessing) return;
+            State.isProcessing = true;
 
             const userAnswer = parseInt(State.currentAnswer);
             const isCorrect = userAnswer === State.currentProblem.answer;
@@ -1444,9 +1549,9 @@
                 State.masteredPairs.add(State.currentProblem.key);
                 // Show checkmark for correct answer
                 answerEl.innerHTML = `${State.currentAnswer} <span style="color:var(--success);font-size:48px;margin-left:12px">✓</span>`;
-                Utils.speak(Utils.getCorrectSpeech(State.currentProblem.answer));
+                await Utils.speak(Utils.getCorrectSpeech(State.currentProblem.answer));
                 if (State.streak > 0 && State.streak % 5 === 0) {
-                    setTimeout(() => UI.showCongrats(), 300);
+                    UI.showCongrats();
                 }
             } else {
                 State.streak = 0;
@@ -1454,9 +1559,9 @@
 
                 // Show correct answer (big and green)
                 answerEl.innerHTML = `<span style="text-decoration:line-through;color:var(--gray-400)">${State.currentAnswer}</span> <span style="color:var(--gray-400);font-size:24px">→</span> <span style="color:var(--success);font-size:56px;font-weight:800">${State.currentProblem.answer}</span>`;
-                Utils.speak(Utils.getWrongSpeech(State.currentProblem.answer));
+                await Utils.speak(Utils.getWrongSpeech(State.currentProblem.answer));
 
-                // Re-queue problem to repeat later (all modes)
+                // Re-queue problem to repeat later (only when wrong)
                 const retryProblem = ProblemGenerator.createProblem(
                     State.currentProblem.a,
                     State.currentProblem.b
@@ -1468,28 +1573,27 @@
 
             // Game ends only when all problems are mastered (queue empty)
             const gameOver = State.problemQueue.length === 0;
-            const success = gameOver;
 
-            // Proceed to next problem or end game
-            const delay = isCorrect ? CONFIG.TIMING.CORRECT_DELAY : CONFIG.TIMING.WRONG_DELAY;
+            // Wait minimum delay then proceed
+            const minDelay = isCorrect ? CONFIG.TIMING.CORRECT_DELAY : CONFIG.TIMING.WRONG_DELAY;
+            await new Promise(resolve => setTimeout(resolve, minDelay));
 
-            setTimeout(() => {
-                if (gameOver) {
-                    if (State.timerInterval) {
-                        clearInterval(State.timerInterval);
-                        State.timerInterval = null;
-                    }
-                    State.elapsedTime = Date.now() - State.startTime;
-                    UI.showResults(success);
-                } else {
-                    State.currentTask++;
-                    State.currentAnswer = '';
-                    State.currentProblem = ProblemGenerator.getNextProblem();
-                    UI.displayProblem();
-                    UI.updateProgress();
-                    UI.resetAnswerDisplay();
+            if (gameOver) {
+                if (State.timerInterval) {
+                    clearInterval(State.timerInterval);
+                    State.timerInterval = null;
                 }
-            }, delay);
+                State.elapsedTime = Date.now() - State.startTime;
+                UI.showResults(true);
+            } else {
+                State.currentTask++;
+                State.currentAnswer = '';
+                State.currentProblem = ProblemGenerator.getNextProblem();
+                UI.displayProblem();
+                UI.updateProgress();
+                UI.resetAnswerDisplay();
+            }
+            State.isProcessing = false;
         },
 
         /** Handle numpad input */
@@ -1593,6 +1697,14 @@
             }
         });
 
+        // Voice install popup
+        const closeVoiceInstall = () => Utils.$('voice-install-overlay').classList.remove('show');
+        Utils.$('btn-voice-install-close').addEventListener('click', closeVoiceInstall);
+        Utils.$('btn-voice-install-ok').addEventListener('click', closeVoiceInstall);
+        Utils.$('voice-install-overlay').addEventListener('click', e => {
+            if (e.target === Utils.$('voice-install-overlay')) closeVoiceInstall();
+        });
+
         // Navigation buttons
         Utils.$('btn-settings-back').addEventListener('click', () => UI.showScreen('menu'));
         Utils.$('btn-learn-back').addEventListener('click', () => UI.showScreen('menu'));
@@ -1611,6 +1723,14 @@
             }
             window.speechSynthesis && window.speechSynthesis.cancel();
             UI.showScreen('menu');
+        });
+        Utils.$('btn-voice-toggle').addEventListener('click', () => {
+            State.voiceEnabled = !State.voiceEnabled;
+            Utils.$('btn-voice-toggle').textContent = State.voiceEnabled ? '🔊' : '🔇';
+            Utils.$('btn-voice-toggle').classList.toggle('off', !State.voiceEnabled);
+            if (!State.voiceEnabled) {
+                window.speechSynthesis && window.speechSynthesis.cancel();
+            }
         });
         Utils.$('btn-play-again').addEventListener('click', () => {
             Utils.$('display-score-summary').classList.remove('success');
