@@ -910,6 +910,7 @@
             this.recognition = null;
             this.isListening = false;
             this.lastRecognized = null;
+            this.aborted = false;
             this.supported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
             if (this.supported) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -940,15 +941,18 @@
         stop() {
             if (this.isListening) {
                 this.isListening = false;
+                this.aborted = true;
                 try { this.recognition.abort(); } catch (e) {}
             }
         }
 
         handleEnd() {
             const wasListening = this.isListening;
+            const wasAborted = this.aborted;
             this.isListening = false;
-            this.onStop?.();
-            if (wasListening && this.lastRecognized !== null) {
+            this.aborted = false;
+            if (!wasAborted) this.onStop?.();
+            if (wasListening && !wasAborted && this.lastRecognized !== null) {
                 this.onResult(String(this.lastRecognized));
             }
         }
@@ -1268,14 +1272,20 @@
         autoStartMic(retries = 3) {
             if (!this.recognizer?.supported || this.state.isProcessing) return;
             this.recognizer.stop();
+            this.ui.setMicListening(true);
+            this.tryStartMic(retries);
+        }
+
+        tryStartMic(retries) {
             setTimeout(() => {
                 if (this.state.isProcessing) return;
-                if (this.recognizer.start()) {
-                    this.ui.setMicListening(true);
-                } else if (retries > 0) {
-                    this.autoStartMic(retries - 1);
+                if (this.recognizer.start()) return;
+                if (retries > 0) {
+                    this.tryStartMic(retries - 1);
+                } else {
+                    this.ui.setMicListening(false);
                 }
-            }, 150);
+            }, 250);
         }
 
         async checkAnswer() {
