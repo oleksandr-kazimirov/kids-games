@@ -242,6 +242,15 @@ Scenario D: Voice input with numerals
   When user says "56" (as numerals)
   Then answer is recognized as 56
     And answer is submitted
+
+Scenario E: Auto-start microphone after problem is read
+  Given speech recognition is supported
+    And voice is enabled
+  When a new problem is displayed
+  Then voice reads the problem aloud
+    And after 500ms delay
+    And microphone automatically starts listening
+    And user can speak their answer immediately
 ```
 
 ---

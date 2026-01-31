@@ -722,8 +722,8 @@
             <div id="display-answer" class="answer-display"></div>
             <div class="numpad" id="numpad"></div>
             <div class="input-row">
-                <button id="btn-mic" class="mic-btn">🎤</button>
                 <button id="btn-check" class="btn btn-success" style="flex:1">CHECK</button>
+                <button id="btn-mic" class="mic-btn">🎤</button>
             </div>
         </div>
 
@@ -1116,9 +1116,10 @@
             Utility.$('voice-install-overlay').classList.add('show');
         }
 
-        displayProblem() {
+        async displayProblem(onComplete) {
             Utility.$('display-problem').innerHTML = this.state.currentProblem.getDisplayHTML();
-            this.speech.speak(this.state.currentProblem.getSpeechText(this.state.voiceLanguage));
+            await this.speech.speak(this.state.currentProblem.getSpeechText(this.state.voiceLanguage));
+            if (onComplete) setTimeout(onComplete, 500);
         }
 
         updateProgress(session) {
@@ -1224,10 +1225,17 @@
             this.state.timerInterval = setInterval(() => this.ui.updateTimer(), CONFIG.TIMING.TIMER_INTERVAL);
             Utility.$('display-timer').textContent = '00:00';
 
-            this.ui.displayProblem();
+            this.ui.displayProblem(() => this.autoStartMic());
             this.ui.updateProgress(this.session);
             this.ui.resetAnswerDisplay();
             this.ui.showScreen('game');
+        }
+
+        autoStartMic() {
+            if (this.recognizer?.supported && !this.state.isProcessing) {
+                Utility.$('btn-mic').classList.add('listening');
+                this.recognizer.start();
+            }
         }
 
         async checkAnswer() {
@@ -1274,7 +1282,7 @@
                 this.state.currentTask++;
                 this.state.currentAnswer = '';
                 this.state.currentProblem = this.state.problemQueue.shift();
-                this.ui.displayProblem();
+                this.ui.displayProblem(() => this.autoStartMic());
                 this.ui.updateProgress(this.session);
                 this.ui.resetAnswerDisplay();
             }
