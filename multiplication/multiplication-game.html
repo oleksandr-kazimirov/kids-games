@@ -909,6 +909,7 @@
             this.onStop = callbacks.onStop;
             this.recognition = null;
             this.isListening = false;
+            this.lastRecognized = null;
             this.supported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
             if (this.supported) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -917,8 +918,8 @@
                 this.recognition.interimResults = true;
                 this.recognition.maxAlternatives = 5;
                 this.recognition.onresult = e => this.handleResult(e);
-                this.recognition.onend = () => this.stop();
-                this.recognition.onerror = () => this.stop();
+                this.recognition.onend = () => this.handleEnd();
+                this.recognition.onerror = () => this.handleEnd();
             }
         }
 
@@ -927,6 +928,7 @@
             try {
                 this.recognition.lang = this.state.voiceLanguage === 'uk' ? 'uk-UA' : 'en-US';
                 this.isListening = true;
+                this.lastRecognized = null;
                 this.recognition.start();
                 return true;
             } catch (e) {
@@ -940,22 +942,27 @@
                 this.isListening = false;
                 try { this.recognition.abort(); } catch (e) {}
             }
+        }
+
+        handleEnd() {
+            const wasListening = this.isListening;
+            this.isListening = false;
             this.onStop?.();
+            if (wasListening && this.lastRecognized !== null) {
+                this.onResult(String(this.lastRecognized));
+            }
         }
 
         handleResult(event) {
-            const lastResult = event.results[event.results.length - 1];
-            const isFinal = lastResult.isFinal;
-            for (const alt of lastResult) {
-                const num = NumberWords.parse(alt.transcript, this.state.voiceLanguage);
-                if (num !== null && num >= 0 && num <= 100) {
-                    isFinal ? this.onResult(String(num)) : this.onInterim?.(String(num));
-                    return;
+            for (const result of event.results) {
+                for (const alt of result) {
+                    const num = NumberWords.parse(alt.transcript, this.state.voiceLanguage);
+                    if (num !== null && num >= 0 && num <= 100) {
+                        this.lastRecognized = num;
+                        this.onInterim?.(String(num));
+                        return;
+                    }
                 }
-            }
-            if (isFinal && lastResult.length > 0) {
-                const digits = lastResult[0].transcript.match(/\d+/);
-                if (digits) this.onResult(digits[0]);
             }
         }
     }
@@ -1271,50 +1278,47 @@
             this.state.isProcessing = true;
             this.state.clearTimer(this.state.autoSubmitTimer);
             this.state.autoSubmitTimer = null;
-
-            const userAnswer = parseInt(this.state.currentAnswer);
-            const isCorrect = userAnswer === this.state.currentProblem.answer;
-            this.state.history.push({ problem: this.state.currentProblem, userAnswer, correct: isCorrect });
-
-            const answerEl = Utility.$('display-answer');
-            answerEl.classList.add(isCorrect ? 'correct' : 'wrong');
-
-            if (isCorrect) {
-                this.state.streak++;
-                this.state.masteredPairs.add(this.state.currentProblem.key);
-                answerEl.innerHTML = `${this.state.currentAnswer} <span style="color:var(--success);font-size:48px;margin-left:12px">✓</span>`;
-                const word = NumberWords.convert(this.state.currentProblem.answer, this.state.voiceLanguage);
-                await this.speech.speak(this.state.voiceLanguage === 'uk' ? `${word}, правильно!` : `${word}, correct!`);
-                if (this.state.streak % 5 === 0) this.ui.showCongrats();
-            } else {
-                this.state.streak = 0;
-                this.state.mistakes++;
-                answerEl.innerHTML = `<span style="text-decoration:line-through;color:var(--gray-400)">${this.state.currentAnswer}</span> <span style="color:var(--gray-400);font-size:24px">→</span> <span style="color:var(--success);font-size:56px;font-weight:800">${this.state.currentProblem.answer}</span>`;
-                const word = NumberWords.convert(this.state.currentProblem.answer, this.state.voiceLanguage);
-                await this.speech.speak(this.state.voiceLanguage === 'uk' ? `Відповідь: ${word}` : `The answer is ${word}`);
-                // Re-queue problem
-                const retry = new Problem(this.state.currentProblem.a, this.state.currentProblem.b, this.state.gameMode);
-                const [minPos, maxPos] = CONFIG.GAME.RETRY_POSITION;
-                const pos = Math.min(this.state.problemQueue.length, Utility.randomInt(minPos, maxPos));
-                this.state.problemQueue.splice(pos, 0, retry);
+            try {
+                const userAnswer = parseInt(this.state.currentAnswer);
+                const isCorrect = userAnswer === this.state.currentProblem.answer;
+                this.state.history.push({ problem: this.state.currentProblem, userAnswer, correct: isCorrect });
+                const answerEl = Utility.$('display-answer');
+                answerEl.classList.add(isCorrect ? 'correct' : 'wrong');
+                if (isCorrect) {
+                    this.state.streak++;
+                    this.state.masteredPairs.add(this.state.currentProblem.key);
+                    answerEl.innerHTML = `${this.state.currentAnswer} <span style="color:var(--success);font-size:48px;margin-left:12px">✓</span>`;
+                    const word = NumberWords.convert(this.state.currentProblem.answer, this.state.voiceLanguage);
+                    await this.speech.speak(this.state.voiceLanguage === 'uk' ? `${word}, правильно!` : `${word}, correct!`);
+                    if (this.state.streak % 5 === 0) this.ui.showCongrats();
+                } else {
+                    this.state.streak = 0;
+                    this.state.mistakes++;
+                    answerEl.innerHTML = `<span style="text-decoration:line-through;color:var(--gray-400)">${this.state.currentAnswer}</span> <span style="color:var(--gray-400);font-size:24px">→</span> <span style="color:var(--success);font-size:56px;font-weight:800">${this.state.currentProblem.answer}</span>`;
+                    const word = NumberWords.convert(this.state.currentProblem.answer, this.state.voiceLanguage);
+                    await this.speech.speak(this.state.voiceLanguage === 'uk' ? `Відповідь: ${word}` : `The answer is ${word}`);
+                    const retry = new Problem(this.state.currentProblem.a, this.state.currentProblem.b, this.state.gameMode);
+                    const [minPos, maxPos] = CONFIG.GAME.RETRY_POSITION;
+                    const pos = Math.min(this.state.problemQueue.length, Utility.randomInt(minPos, maxPos));
+                    this.state.problemQueue.splice(pos, 0, retry);
+                }
+                await new Promise(r => setTimeout(r, isCorrect ? CONFIG.TIMING.CORRECT_DELAY : CONFIG.TIMING.WRONG_DELAY));
+                if (this.state.problemQueue.length === 0) {
+                    this.state.clearTimer(this.state.timerInterval);
+                    this.state.timerInterval = null;
+                    this.state.elapsedTime = Date.now() - this.state.startTime;
+                    this.ui.showResults(this.session);
+                } else {
+                    this.state.currentTask++;
+                    this.state.currentAnswer = '';
+                    this.state.currentProblem = this.state.problemQueue.shift();
+                    this.ui.displayProblem(() => this.autoStartMic());
+                    this.ui.updateProgress(this.session);
+                    this.ui.resetAnswerDisplay();
+                }
+            } finally {
+                this.state.isProcessing = false;
             }
-
-            await new Promise(r => setTimeout(r, isCorrect ? CONFIG.TIMING.CORRECT_DELAY : CONFIG.TIMING.WRONG_DELAY));
-
-            if (this.state.problemQueue.length === 0) {
-                this.state.clearTimer(this.state.timerInterval);
-                this.state.timerInterval = null;
-                this.state.elapsedTime = Date.now() - this.state.startTime;
-                this.ui.showResults(this.session);
-            } else {
-                this.state.currentTask++;
-                this.state.currentAnswer = '';
-                this.state.currentProblem = this.state.problemQueue.shift();
-                this.ui.displayProblem(() => this.autoStartMic());
-                this.ui.updateProgress(this.session);
-                this.ui.resetAnswerDisplay();
-            }
-            this.state.isProcessing = false;
         }
 
         handleInput(value) {
