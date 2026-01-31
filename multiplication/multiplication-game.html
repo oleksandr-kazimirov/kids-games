@@ -793,12 +793,9 @@
             return this.createProblem(a, b);
         },
 
-        /** Get next problem based on session type */
+        /** Get next problem from queue */
         getNextProblem() {
-            if (State.isPracticeMode()) {
-                return State.problemQueue.length ? State.problemQueue.shift() : null;
-            }
-            return this.generateRandomProblem();
+            return State.problemQueue.length ? State.problemQueue.shift() : null;
         },
 
         /** Calculate total combinations for Practice All mode */
@@ -841,22 +838,21 @@
         /** Update progress display */
         updateProgress() {
             const mistakesEl = Utils.$('display-mistakes');
+            let total;
 
-            if (State.isPracticeMode()) {
-                const total = State.sessionType === 'practice-one'
-                    ? 10
-                    : ProblemGenerator.calculateTotalCombinations(State.maxNumber);
-
-                Utils.$('display-progress').textContent = `Mastered: ${State.masteredPairs.size} / ${total}`;
-                mistakesEl.textContent = `Remaining: ${State.problemQueue.length}`;
-                mistakesEl.className = 'remaining';
+            if (State.sessionType === 'practice-one') {
+                total = 10;
+            } else if (State.sessionType === 'practice-all') {
+                total = ProblemGenerator.calculateTotalCombinations(State.maxNumber);
             } else {
-                Utils.$('display-progress').textContent = `${State.currentTask + 1} / ${State.totalTasks}`;
-                mistakesEl.className = 'mistakes';
-                mistakesEl.textContent = State.maxMistakes > 0
-                    ? `Mistakes: ${State.mistakes} / ${State.maxMistakes}`
-                    : `Mistakes: ${State.mistakes}`;
+                total = State.totalTasks;
             }
+
+            Utils.$('display-progress').textContent = `Mastered: ${State.masteredPairs.size} / ${total}`;
+            mistakesEl.textContent = State.mistakes > 0
+                ? `Mistakes: ${State.mistakes} | Left: ${State.problemQueue.length}`
+                : `Left: ${State.problemQueue.length}`;
+            mistakesEl.className = State.mistakes > 0 ? 'mistakes' : 'remaining';
         },
 
         /** Update timer display */
@@ -915,41 +911,35 @@
 
         /** Show results screen */
         showResults(success) {
-            const correctCount = State.history.filter(h => h.correct).length;
-            const total = State.history.length;
-            const percent = total ? Math.round((correctCount / total) * 100) : 0;
             const timeStr = Utils.formatTime(State.elapsedTime);
-
             const summaryEl = Utils.$('display-score-summary');
             const gameOverEl = Utils.$('display-game-over');
 
-            if (State.isPracticeMode()) {
-                const taskCount = State.sessionType === 'practice-one'
-                    ? 10
-                    : ProblemGenerator.calculateTotalCombinations(State.maxNumber);
-                const label = State.sessionType === 'practice-one'
-                    ? `Table of ${State.practiceNumber}`
-                    : 'All tables';
-
-                Utils.$('display-score').textContent = `${taskCount} / ${taskCount}`;
-                Utils.$('display-percent').innerHTML = `${label} mastered in <strong>${timeStr}</strong>`;
-                summaryEl.classList.add('success');
-                gameOverEl.textContent = `Congratulations! You mastered all ${taskCount} problems!`;
-                gameOverEl.className = 'game-over-message success';
-                gameOverEl.style.display = 'block';
+            // Calculate task count based on session type
+            let taskCount, label;
+            if (State.sessionType === 'practice-one') {
+                taskCount = 10;
+                label = `Table of ${State.practiceNumber}`;
+            } else if (State.sessionType === 'practice-all') {
+                taskCount = ProblemGenerator.calculateTotalCombinations(State.maxNumber);
+                label = 'All tables';
             } else {
-                Utils.$('display-score').textContent = `${correctCount} / ${total}`;
-                Utils.$('display-percent').innerHTML = `${percent}% correct • Time: <strong>${timeStr}</strong>`;
-                summaryEl.classList.remove('success');
-
-                if (!success && State.maxMistakes > 0) {
-                    gameOverEl.textContent = 'Game Over - Too many mistakes!';
-                    gameOverEl.className = 'game-over-message';
-                    gameOverEl.style.display = 'block';
-                } else {
-                    gameOverEl.style.display = 'none';
-                }
+                taskCount = State.totalTasks;
+                label = `${taskCount} problems`;
             }
+
+            Utils.$('display-score').textContent = `${taskCount} / ${taskCount}`;
+            Utils.$('display-percent').innerHTML = `${label} mastered in <strong>${timeStr}</strong>`;
+            summaryEl.classList.add('success');
+
+            const mistakeCount = State.mistakes;
+            if (mistakeCount > 0) {
+                gameOverEl.textContent = `Completed with ${mistakeCount} mistake${mistakeCount > 1 ? 's' : ''} corrected!`;
+            } else {
+                gameOverEl.textContent = `Perfect! No mistakes!`;
+            }
+            gameOverEl.className = 'game-over-message success';
+            gameOverEl.style.display = 'block';
 
             // Show only mistakes
             const mistakes = [];
@@ -1037,10 +1027,16 @@
                 State.problemQueue = ProblemGenerator.generateAllProblems();
             } else if (State.sessionType === 'practice-one') {
                 State.problemQueue = ProblemGenerator.generateOneTableProblems(State.practiceNumber);
+            } else {
+                // Fixed mode: generate queue of random problems
+                State.problemQueue = [];
+                for (let i = 0; i < State.totalTasks; i++) {
+                    State.problemQueue.push(ProblemGenerator.generateRandomProblem());
+                }
             }
 
-            // Get first problem
-            State.currentProblem = ProblemGenerator.getNextProblem();
+            // Get first problem from queue
+            State.currentProblem = State.problemQueue.shift();
 
             // Start timer
             State.startTime = Date.now();
@@ -1074,9 +1070,7 @@
 
             if (isCorrect) {
                 State.streak++;
-                if (State.isPracticeMode()) {
-                    State.masteredPairs.add(State.currentProblem.key);
-                }
+                State.masteredPairs.add(State.currentProblem.key);
                 // Show checkmark for correct answer
                 answerEl.innerHTML = `${State.currentAnswer} <span style="color:var(--success);font-size:48px;margin-left:12px">✓</span>`;
                 if (State.streak > 0 && State.streak % 5 === 0) {
@@ -1089,31 +1083,19 @@
                 // Show correct answer (big and green)
                 answerEl.innerHTML = `<span style="text-decoration:line-through;color:var(--gray-400)">${State.currentAnswer}</span> <span style="color:var(--gray-400);font-size:24px">→</span> <span style="color:var(--success);font-size:56px;font-weight:800">${State.currentProblem.answer}</span>`;
 
-                // Re-queue problem in practice mode
-                if (State.isPracticeMode()) {
-                    const retryProblem = ProblemGenerator.createProblem(
-                        State.currentProblem.a,
-                        State.currentProblem.b
-                    );
-                    const [minPos, maxPos] = CONFIG.GAME.RETRY_POSITION;
-                    const position = Math.min(State.problemQueue.length, Utils.randomInt(minPos, maxPos));
-                    State.problemQueue.splice(position, 0, retryProblem);
-                }
+                // Re-queue problem to repeat later (all modes)
+                const retryProblem = ProblemGenerator.createProblem(
+                    State.currentProblem.a,
+                    State.currentProblem.b
+                );
+                const [minPos, maxPos] = CONFIG.GAME.RETRY_POSITION;
+                const position = Math.min(State.problemQueue.length, Utils.randomInt(minPos, maxPos));
+                State.problemQueue.splice(position, 0, retryProblem);
             }
 
-            // Check game over conditions
-            let gameOver = false;
-            let success = false;
-
-            if (State.isPracticeMode()) {
-                gameOver = State.problemQueue.length === 0;
-                success = gameOver;
-            } else {
-                const mistakesExceeded = State.maxMistakes > 0 && State.mistakes >= State.maxMistakes;
-                const tasksCompleted = State.currentTask >= State.totalTasks - 1;
-                gameOver = mistakesExceeded || tasksCompleted;
-                success = tasksCompleted && !mistakesExceeded;
-            }
+            // Game ends only when all problems are mastered (queue empty)
+            const gameOver = State.problemQueue.length === 0;
+            const success = gameOver;
 
             // Proceed to next problem or end game
             const delay = isCorrect ? CONFIG.TIMING.CORRECT_DELAY : CONFIG.TIMING.WRONG_DELAY;

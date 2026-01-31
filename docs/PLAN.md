@@ -29,11 +29,11 @@ A tablet-optimized multiplication learning game for children (ages 7-9) built as
 
 | Mode | Description | Best For |
 |------|-------------|----------|
-| **Fixed Tasks** | Set number of problems with mistake limit | Quick practice |
+| **Fixed Tasks** | Set number of random problems | Quick practice |
 | **Practice All** | All tables from 2 to max (e.g., max=5 → 40 problems) | Complete mastery |
 | **Practice One** | Single table (e.g., 7×1 through 7×10) | Targeted practice |
 
-**Practice modes:** Wrong answers repeat later until mastered.
+**All modes:** Wrong answers repeat until correct! Game ends only when ALL problems are mastered.
 
 ---
 
