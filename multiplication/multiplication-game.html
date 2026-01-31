@@ -1265,14 +1265,17 @@
             this.ui.showScreen('game');
         }
 
-        autoStartMic() {
+        autoStartMic(retries = 3) {
             if (!this.recognizer?.supported || this.state.isProcessing) return;
             this.recognizer.stop();
             setTimeout(() => {
-                if (!this.state.isProcessing && this.recognizer.start()) {
+                if (this.state.isProcessing) return;
+                if (this.recognizer.start()) {
                     this.ui.setMicListening(true);
+                } else if (retries > 0) {
+                    this.autoStartMic(retries - 1);
                 }
-            }, 100);
+            }, 150);
         }
 
         async checkAnswer() {
