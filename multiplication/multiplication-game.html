@@ -881,9 +881,9 @@
             if (numMatch) return parseInt(numMatch[0], 10);
             // Exact match for ones (0-19)
             for (let i = 0; i < 20; i++) {
-                if (t === w.ones[i] || t.split(/\s+/).includes(w.ones[i])) return i;
+                if (t === w.ones[i]) return i;
             }
-            // Tens (20-99)
+            // Tens (20-99) - check before split-based ones matching
             for (let i = 2; i < 10; i++) {
                 if (t.includes(w.tens[i])) {
                     let ones = 0;

@@ -13,11 +13,12 @@ Kids educational games - single HTML files, no dependencies, offline-capable.
 
 ## IMPORTANT: Keep Files in Sync
 When making ANY changes, ALWAYS update these files together:
-1. `docs/FEATURES.md` - BDD scenarios (Gherkin format, labeled A, B, C...)
-2. `docs/PLAN.md` - Implementation plan and specifications
-3. `multiplication/multiplication-game.html` - The actual code
+1. `multiplication/multiplication-game.html` - The actual game code
+2. `multiplication/tests.html` - Unit tests (copy updated classes here)
+3. `docs/FEATURES.md` - BDD scenarios (Gherkin format)
+4. `docs/PLAN.md` - Implementation plan and specifications
 
-**Never change code without updating FEATURES.md and PLAN.md accordingly!**
+**Never change code without updating tests and documentation accordingly!**
 
 ## Documentation Files
 - `docs/FEATURES.md` - BDD scenarios in Gherkin format for all features
@@ -44,10 +45,11 @@ kids-games/
 ├── README.md
 ├── LICENSE
 ├── docs/
-│   ├── PLAN.md        <- Update with any spec changes
-│   └── FEATURES.md    <- Update BDD scenarios
+│   ├── PLAN.md              <- Update with any spec changes
+│   └── FEATURES.md          <- Update BDD scenarios
 └── multiplication/
-    └── multiplication-game.html
+    ├── multiplication-game.html  <- Main game code
+    └── tests.html                <- Unit tests (sync classes from main)
 ```
 
 ## Coding Standards
@@ -63,7 +65,9 @@ kids-games/
 - No Co-Authored-By line
 
 ## Testing
-Open HTML file directly in browser. Test on:
+**Unit Tests:** Open `multiplication/tests.html` in browser - runs automatically.
+
+**Manual Testing:** Open game in browser. Test on:
 - Desktop browser
 - Tablet (primary target)
 - Mobile phone
