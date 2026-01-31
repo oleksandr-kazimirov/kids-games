@@ -202,17 +202,7 @@
 
         .progress-text, .mistakes, .remaining, .timer { font-size: 18px; font-weight: 500; }
 
-        .voice-toggle {
-            padding: 4px 8px;
-            font-size: 16px;
-            border: 2px solid var(--gray-300);
-            border-radius: var(--radius-sm);
-            background: #fff;
-            cursor: pointer;
-            transition: all .2s;
-        }
-        .voice-toggle:active { transform: scale(.95); }
-        .voice-toggle.off { opacity: 0.5; }
+        .voice-toggle.off { opacity: 0.5; border-color: var(--gray-300); color: var(--gray-400); }
         .progress-text { color: var(--gray-600); }
         .timer { color: var(--warning); font-family: monospace; font-size: 20px; }
         .mistakes { color: var(--error); }
@@ -667,9 +657,9 @@
             <div id="display-answer" class="answer-display"></div>
             <div class="numpad" id="numpad"></div>
             <button id="btn-check" class="btn btn-primary">CHECK</button>
-            <div style="display:flex;gap:12px">
-                <button id="btn-finish" class="btn btn-outline" style="flex:1">FINISH</button>
-                <button id="btn-voice-toggle" class="voice-toggle">🔊</button>
+            <div style="display:flex;gap:12px;align-items:stretch">
+                <button id="btn-finish" class="btn btn-outline" style="flex:1;margin-bottom:0">FINISH</button>
+                <button id="btn-voice-toggle" class="btn btn-outline voice-toggle" style="width:auto;padding-left:20px;padding-right:20px">🔊</button>
             </div>
         </div>
 
@@ -721,7 +711,7 @@
 <script>
 /**
  * Multiplication Game for Kids
- * A tablet-optimized educational game using vanilla ES6+ JavaScript
+ * OOP Architecture with ES6+ Classes
  */
 (() => {
     'use strict';
@@ -731,1076 +721,543 @@
     // =========================================================================
 
     const CONFIG = {
-        TIMING: {
-            CORRECT_DELAY: 500,
-            WRONG_DELAY: 1000,
-            AUTO_SUBMIT_DELAY: 2000,
-            CONGRATS_DURATION: 1500,
-            TIMER_INTERVAL: 1000
-        },
-        GAME: {
-            MIN_NUMBER: 2,
-            MAX_NUMBER: 10,
-            MULTIPLIER_RANGE: [1, 10],
-            RETRY_POSITION: [3, 7]
-        },
-        CONGRATS_MESSAGES: [
-            ['🌟', 'Great job!'],
-            ['🎉', 'Amazing!'],
-            ['🏆', 'Fantastic!'],
-            ['⭐', 'Super star!'],
-            ['🚀', 'Excellent!'],
-            ['🔥', "You're on fire!"],
-            ['👏', 'Keep it up!'],
-            ['💪', 'Math champion!'],
-            ['🎯', 'Brilliant!'],
-            ['✨', 'Outstanding!']
-        ]
+        TIMING: { CORRECT_DELAY: 500, WRONG_DELAY: 1000, AUTO_SUBMIT_DELAY: 2000, CONGRATS_DURATION: 1500, TIMER_INTERVAL: 1000 },
+        GAME: { MIN_NUMBER: 2, MAX_NUMBER: 10, MULTIPLIER_RANGE: [1, 10], RETRY_POSITION: [3, 7] },
+        CONGRATS: [['🌟','Great job!'],['🎉','Amazing!'],['🏆','Fantastic!'],['⭐','Super star!'],['🚀','Excellent!'],['🔥',"You're on fire!"],['👏','Keep it up!'],['💪','Math champion!'],['🎯','Brilliant!'],['✨','Outstanding!']]
     };
-
-    // =========================================================================
-    // TRANSLATIONS
-    // =========================================================================
 
     const TRANSLATIONS = {
-        en: {
-            menuTitle: 'Multiplication Game',
-            play: 'PLAY',
-            learn: 'LEARN',
-            settings: 'Game Settings',
-            practiceUpTo: 'Practice numbers up to:',
-            questionType: 'Question Type:',
-            findResult: 'Find the Result (A × B = ?)',
-            findMultiplier: 'Find the Multiplier (? × B = Z)',
-            sessionType: 'Session Type:',
-            fixedTasks: 'Fixed Tasks',
-            practiceAll: 'Practice All Tables',
-            practiceOne: 'Practice One Table',
-            selectTable: 'Select table to practice:',
-            tasks: 'Tasks:',
-            maxMistakes: 'Max Mistakes:',
-            unlimited: 'Unlimited',
-            start: 'START',
-            back: 'BACK',
-            backToMenu: 'BACK TO MENU',
-            check: 'CHECK',
-            finish: 'FINISH',
-            learnTables: 'Learn Tables',
-            learnHint: 'Select a number to see its multiplication table:',
-            tableOf: 'Table of',
-            results: 'Results',
-            playAgain: 'PLAY AGAIN',
-            mastered: 'Mastered:',
-            mistakes: 'Mistakes:',
-            left: 'Left:',
-            practiceAllInfo: 'Practice All: Tables 2-{max} ({total} tasks)',
-            perfectMessage: 'Perfect! No mistakes!',
-            completedMessage: 'Completed with {count} mistake(s) corrected!',
-            noMistakes: 'No mistakes! Perfect!',
-            masteredIn: '{label} mastered in',
-            aboutTitle: 'About',
-            aboutGoal: 'A fun game to help children learn multiplication tables through practice. Answer problems, learn from mistakes, and master all tables!',
-            aboutAuthor: 'by O. Kazimirov',
-            voiceInstallTitle: 'Ukrainian Voice Not Found',
-            voiceInstallText: 'To hear Ukrainian pronunciation, please install a Ukrainian voice on your device:',
-            voiceInstallAndroid: '<b>Android:</b><br>Settings → System → Languages → Text-to-Speech → Install Ukrainian voice',
-            voiceInstallIOS: '<b>iPad/iPhone:</b><br>Settings → Accessibility → Spoken Content → Voices → Ukrainian → Download',
-            voiceInstallWindows: '<b>Windows:</b><br>Settings → Time & Language → Speech → Add voices → Ukrainian',
-            voiceInstallOther: 'Check your device settings for Text-to-Speech or Voice options.'
-        },
-        uk: {
-            menuTitle: 'Гра на Множення',
-            play: 'ГРАТИ',
-            learn: 'ВЧИТИ',
-            settings: 'Налаштування',
-            practiceUpTo: 'Числа до:',
-            questionType: 'Тип питання:',
-            findResult: 'Знайти результат (A × B = ?)',
-            findMultiplier: 'Знайти множник (? × B = Z)',
-            sessionType: 'Тип сесії:',
-            fixedTasks: 'Фіксовані завдання',
-            practiceAll: 'Всі таблиці',
-            practiceOne: 'Одна таблиця',
-            selectTable: 'Оберіть таблицю:',
-            tasks: 'Завдань:',
-            maxMistakes: 'Макс. помилок:',
-            unlimited: 'Без ліміту',
-            start: 'СТАРТ',
-            back: 'НАЗАД',
-            backToMenu: 'ДО МЕНЮ',
-            check: 'ПЕРЕВІРИТИ',
-            finish: 'ЗАВЕРШИТИ',
-            learnTables: 'Вивчення таблиць',
-            learnHint: 'Оберіть число щоб побачити таблицю множення:',
-            tableOf: 'Таблиця на',
-            results: 'Результати',
-            playAgain: 'ГРАТИ ЗНОВУ',
-            mastered: 'Вивчено:',
-            mistakes: 'Помилок:',
-            left: 'Лишилось:',
-            practiceAllInfo: 'Всі таблиці: 2-{max} ({total} завдань)',
-            perfectMessage: 'Чудово! Без помилок!',
-            completedMessage: 'Завершено з {count} виправленими помилками!',
-            noMistakes: 'Без помилок! Чудово!',
-            masteredIn: '{label} вивчено за',
-            aboutTitle: 'Про гру',
-            aboutGoal: 'Весела гра для вивчення таблиці множення. Розв\'язуй приклади, вчись на помилках та опануй всі таблиці!',
-            aboutAuthor: 'автор О. Казіміров',
-            voiceInstallTitle: 'Український голос не знайдено',
-            voiceInstallText: 'Щоб чути українську вимову, встановіть український голос на пристрої:',
-            voiceInstallAndroid: '<b>Android:</b><br>Налаштування → Система → Мови → Синтез мовлення → Встановити українську',
-            voiceInstallIOS: '<b>iPad/iPhone:</b><br>Налаштування → Доступність → Усний вміст → Голоси → Українська → Завантажити',
-            voiceInstallWindows: '<b>Windows:</b><br>Параметри → Час і мова → Мовлення → Додати голоси → Українська',
-            voiceInstallOther: 'Перевірте налаштування синтезу мовлення на вашому пристрої.'
-        }
+        en: { menuTitle:'Multiplication Game',play:'PLAY',learn:'LEARN',settings:'Game Settings',practiceUpTo:'Practice numbers up to:',questionType:'Question Type:',findResult:'Find the Result (A × B = ?)',findMultiplier:'Find the Multiplier (? × B = Z)',sessionType:'Session Type:',fixedTasks:'Fixed Tasks',practiceAll:'Practice All Tables',practiceOne:'Practice One Table',selectTable:'Select table to practice:',tasks:'Tasks:',maxMistakes:'Max Mistakes:',unlimited:'Unlimited',start:'START',back:'BACK',backToMenu:'BACK TO MENU',check:'CHECK',finish:'FINISH',learnTables:'Learn Tables',learnHint:'Select a number to see its multiplication table:',tableOf:'Table of',results:'Results',playAgain:'PLAY AGAIN',mastered:'Mastered:',mistakes:'Mistakes:',left:'Left:',practiceAllInfo:'Practice All: Tables 2-{max} ({total} tasks)',perfectMessage:'Perfect! No mistakes!',completedMessage:'Completed with {count} mistake(s) corrected!',noMistakes:'No mistakes! Perfect!',masteredIn:'{label} mastered in',aboutTitle:'About',aboutGoal:'A fun game to help children learn multiplication tables through practice.',aboutAuthor:'by O. Kazimirov',voiceInstallTitle:'Ukrainian Voice Not Found',voiceInstallText:'To hear Ukrainian pronunciation, please install a Ukrainian voice:',voiceInstall:{android:'<b>Android:</b><br>Settings → System → Languages → Text-to-Speech',ios:'<b>iPad/iPhone:</b><br>Settings → Accessibility → Spoken Content → Voices',windows:'<b>Windows:</b><br>Settings → Time & Language → Speech',other:'Check your device Text-to-Speech settings.'}},
+        uk: { menuTitle:'Гра на Множення',play:'ГРАТИ',learn:'ВЧИТИ',settings:'Налаштування',practiceUpTo:'Числа до:',questionType:'Тип питання:',findResult:'Знайти результат (A × B = ?)',findMultiplier:'Знайти множник (? × B = Z)',sessionType:'Тип сесії:',fixedTasks:'Фіксовані завдання',practiceAll:'Всі таблиці',practiceOne:'Одна таблиця',selectTable:'Оберіть таблицю:',tasks:'Завдань:',maxMistakes:'Макс. помилок:',unlimited:'Без ліміту',start:'СТАРТ',back:'НАЗАД',backToMenu:'ДО МЕНЮ',check:'ПЕРЕВІРИТИ',finish:'ЗАВЕРШИТИ',learnTables:'Вивчення таблиць',learnHint:'Оберіть число щоб побачити таблицю множення:',tableOf:'Таблиця на',results:'Результати',playAgain:'ГРАТИ ЗНОВУ',mastered:'Вивчено:',mistakes:'Помилок:',left:'Лишилось:',practiceAllInfo:'Всі таблиці: 2-{max} ({total} завдань)',perfectMessage:'Чудово! Без помилок!',completedMessage:'Завершено з {count} виправленими помилками!',noMistakes:'Без помилок! Чудово!',masteredIn:'{label} вивчено за',aboutTitle:'Про гру',aboutGoal:'Весела гра для вивчення таблиці множення.',aboutAuthor:'автор О. Казіміров',voiceInstallTitle:'Український голос не знайдено',voiceInstallText:'Щоб чути українську вимову, встановіть український голос:',voiceInstall:{android:'<b>Android:</b><br>Налаштування → Система → Мови → Синтез мовлення',ios:'<b>iPad/iPhone:</b><br>Налаштування → Доступність → Усний вміст → Голоси',windows:'<b>Windows:</b><br>Параметри → Час і мова → Мовлення',other:'Перевірте налаштування синтезу мовлення.'}}
     };
 
     // =========================================================================
-    // UTILITIES
+    // UTILITY CLASS
     // =========================================================================
 
-    const Utils = {
-        /** Get element by ID */
-        $(id) {
-            return document.getElementById(id);
-        },
+    class Utility {
+        static $(id) { return document.getElementById(id); }
+        static randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        static shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = this.randomInt(0, i); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+        static pairKey(a, b) { return a < b ? `${a}x${b}` : `${b}x${a}`; }
+        static formatTime(ms) { const s = Math.floor(ms / 1000); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
+        static getPlatform() {
+            const ua = navigator.userAgent;
+            const platforms = { ios: /iPad|iPhone|iPod/, android: /Android/, windows: /Windows/ };
+            return Object.entries(platforms).find(([, re]) => re.test(ua))?.[0] || 'other';
+        }
+    }
 
-        /** Generate random integer between min and max (inclusive) */
-        randomInt(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        },
+    // =========================================================================
+    // SPEECH SERVICE CLASS
+    // =========================================================================
 
-        /** Shuffle array in place using Fisher-Yates algorithm */
-        shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = this.randomInt(0, i);
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        },
+    class SpeechService {
+        constructor(state) { this.state = state; }
 
-        /** Create a unique key for a multiplication pair */
-        pairKey(a, b) {
-            return a < b ? `${a}x${b}` : `${b}x${a}`;
-        },
-
-        /** Format milliseconds as MM:SS */
-        formatTime(ms) {
-            const totalSeconds = Math.floor(ms / 1000);
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        },
-
-        /** Speak text using Web Speech API (if enabled). Returns Promise that resolves when done. */
-        speak(text, lang = null) {
+        speak(text) {
             return new Promise(resolve => {
-                if (!State.voiceEnabled || !('speechSynthesis' in window)) {
-                    resolve();
-                    return;
-                }
-
+                if (!this.state.voiceEnabled || !('speechSynthesis' in window)) return resolve();
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
-                const language = lang || State.voiceLanguage;
-                const targetLang = language === 'uk' ? 'uk' : 'en';
-
-                // Find the best matching voice
+                const lang = this.state.voiceLanguage === 'uk' ? 'uk' : 'en';
                 const voices = window.speechSynthesis.getVoices();
-                const voice = voices.find(v => v.lang.startsWith(targetLang)) ||
-                              voices.find(v => v.lang.includes(targetLang));
-
-                if (voice) {
-                    utterance.voice = voice;
-                    utterance.lang = voice.lang;
-                } else {
-                    utterance.lang = language === 'uk' ? 'uk-UA' : 'en-US';
-                }
-
+                const voice = voices.find(v => v.lang.startsWith(lang)) || voices.find(v => v.lang.includes(lang));
+                utterance.voice = voice || null;
+                utterance.lang = voice?.lang || (lang === 'uk' ? 'uk-UA' : 'en-US');
                 utterance.rate = 0.85;
                 utterance.pitch = 1.1;
-
-                let resolved = false;
-                const done = () => {
-                    if (!resolved) {
-                        resolved = true;
-                        clearTimeout(fallbackTimer);
-                        resolve();
-                    }
-                };
-
-                utterance.onend = done;
-                utterance.onerror = done;
+                let done = false;
+                const finish = () => { if (!done) { done = true; clearTimeout(timer); resolve(); } };
+                utterance.onend = utterance.onerror = finish;
                 window.speechSynthesis.speak(utterance);
-
-                // Fallback timeout in case onend doesn't fire (3 seconds max)
-                const fallbackTimer = setTimeout(done, 3000);
+                const timer = setTimeout(finish, 3000);
             });
-        },
+        }
 
-        /** Convert number to words in selected language */
-        numberToWords(num) {
-            const lang = State.voiceLanguage;
-            const n = parseInt(num, 10) || 0;
-
-            const wordsEN = {
-                ones: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
-                       'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen',
-                       'eighteen', 'nineteen'],
-                tens: ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'],
-                hundred: 'one hundred'
-            };
-
-            const wordsUK = {
-                ones: ['нуль', 'один', 'два', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', "дев'ять", 'десять',
-                       'одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', "п'ятнадцять", 'шістнадцять',
-                       'сімнадцять', 'вісімнадцять', "дев'ятнадцять"],
-                tens: ['', '', 'двадцять', 'тридцять', 'сорок', "п'ятдесят", 'шістдесят', 'сімдесят',
-                       'вісімдесят', "дев'яносто"],
-                hundred: 'сто'
-            };
-
-            const words = lang === 'uk' ? wordsUK : wordsEN;
-
-            if (n < 20) return words.ones[n];
-            if (n < 100) {
-                const t = Math.floor(n / 10);
-                const o = n % 10;
-                return words.tens[t] + (o > 0 ? (lang === 'uk' ? ' ' : '-') + words.ones[o] : '');
-            }
-            // 100
-            return words.hundred;
-        },
-
-        /** Get speech text for problem */
-        getProblemSpeech(problem) {
-            const lang = State.voiceLanguage;
-            const a = this.numberToWords(problem.a);
-            const b = this.numberToWords(problem.b);
-            const result = this.numberToWords(problem.result);
-
-            if (State.gameMode === 'result') {
-                return lang === 'uk'
-                    ? `${a} помножити на ${b}`
-                    : `${a}, times ${b}`;
-            } else {
-                if (problem.hidden === 'a') {
-                    return lang === 'uk'
-                        ? `Що, помножити на ${b}, дорівнює ${result}`
-                        : `What number, times ${b}, equals ${result}`;
-                } else {
-                    return lang === 'uk'
-                        ? `${a}, помножити на що, дорівнює ${result}`
-                        : `${a}, times what number, equals ${result}`;
-                }
-            }
-        },
-
-        /** Get speech text for correct answer */
-        getCorrectSpeech(answer) {
-            const answerWord = this.numberToWords(answer);
-            return State.voiceLanguage === 'uk'
-                ? `${answerWord}, правильно!`
-                : `${answerWord}, correct!`;
-        },
-
-        /** Get speech text for wrong answer */
-        getWrongSpeech(correctAnswer) {
-            const answerWord = this.numberToWords(correctAnswer);
-            return State.voiceLanguage === 'uk'
-                ? `Відповідь: ${answerWord}`
-                : `The answer is ${answerWord}`;
-        },
-
-        /** Check if a voice for the given language is available */
         hasVoice(lang) {
             if (!('speechSynthesis' in window)) return false;
-            const voices = window.speechSynthesis.getVoices();
-            const targetLang = lang === 'uk' ? 'uk' : 'en';
-            return voices.some(v => v.lang.startsWith(targetLang) || v.lang.includes(targetLang));
-        },
-
-        /** Detect platform */
-        getPlatform() {
-            const ua = navigator.userAgent;
-            if (/iPad|iPhone|iPod/.test(ua)) return 'ios';
-            if (/Android/.test(ua)) return 'android';
-            if (/Windows/.test(ua)) return 'windows';
-            return 'other';
-        },
-
-        /** Show voice install instructions */
-        showVoiceInstallHelp() {
-            const t = TRANSLATIONS[State.uiLanguage];
-            const platform = this.getPlatform();
-
-            Utils.$('voice-install-title').textContent = t.voiceInstallTitle;
-            Utils.$('voice-install-text').textContent = t.voiceInstallText;
-
-            let instructions = '';
-            if (platform === 'android') {
-                instructions = t.voiceInstallAndroid;
-            } else if (platform === 'ios') {
-                instructions = t.voiceInstallIOS;
-            } else if (platform === 'windows') {
-                instructions = t.voiceInstallWindows;
-            } else {
-                instructions = t.voiceInstallOther;
-            }
-            Utils.$('voice-install-instructions').innerHTML = instructions;
-            Utils.$('voice-install-overlay').classList.add('show');
+            const target = lang === 'uk' ? 'uk' : 'en';
+            return window.speechSynthesis.getVoices().some(v => v.lang.startsWith(target) || v.lang.includes(target));
         }
-    };
+
+        cancel() { window.speechSynthesis?.cancel(); }
+    }
 
     // =========================================================================
-    // STATE MANAGEMENT
+    // NUMBER WORDS CLASS
     // =========================================================================
 
-    const State = {
-        // Settings
-        maxNumber: 10,
-        practiceNumber: 5,
-        gameMode: 'result',
-        sessionType: 'fixed',
-        totalTasks: 10,
-        maxMistakes: 3,
-        voiceEnabled: true,
-        voiceLanguage: 'en',
-        uiLanguage: 'en',
+    class NumberWords {
+        static WORDS = {
+            en: { ones: ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'], tens: ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'], hundred: 'one hundred', sep: '-' },
+            uk: { ones: ['нуль','один','два','три','чотири',"п'ять",'шість','сім','вісім',"дев'ять",'десять','одинадцять','дванадцять','тринадцять','чотирнадцять',"п'ятнадцять",'шістнадцять','сімнадцять','вісімнадцять',"дев'ятнадцять"], tens: ['','','двадцять','тридцять','сорок',"п'ятдесят",'шістдесят','сімдесят','вісімдесят',"дев'яносто"], hundred: 'сто', sep: ' ' }
+        };
 
-        // Game state
-        currentTask: 0,
-        mistakes: 0,
-        streak: 0,
-        currentAnswer: '',
-        currentProblem: null,
-        isProcessing: false,
-        autoSubmitTimer: null,
-
-        // Collections
-        usedPairs: new Set(),
-        problemQueue: [],
-        masteredPairs: new Set(),
-        history: [],
-
-        // Timer
-        startTime: 0,
-        elapsedTime: 0,
-        timerInterval: null,
-
-        /** Reset game state for new session */
-        reset() {
-            this.currentTask = 0;
-            this.mistakes = 0;
-            this.streak = 0;
-            this.currentAnswer = '';
-            this.currentProblem = null;
-            this.isProcessing = false;
-            if (this.autoSubmitTimer) {
-                clearTimeout(this.autoSubmitTimer);
-                this.autoSubmitTimer = null;
-            }
-            this.usedPairs.clear();
-            this.problemQueue = [];
-            this.masteredPairs.clear();
-            this.history = [];
-            this.startTime = 0;
-            this.elapsedTime = 0;
-            if (this.timerInterval) {
-                clearInterval(this.timerInterval);
-                this.timerInterval = null;
-            }
-        },
-
-        /** Check if current session is a practice mode */
-        isPracticeMode() {
-            return this.sessionType === 'practice-all' || this.sessionType === 'practice-one';
+        static convert(num, lang) {
+            const n = parseInt(num, 10) || 0;
+            const w = this.WORDS[lang] || this.WORDS.en;
+            if (n < 20) return w.ones[n];
+            if (n < 100) { const t = Math.floor(n / 10), o = n % 10; return w.tens[t] + (o > 0 ? w.sep + w.ones[o] : ''); }
+            return w.hundred;
         }
-    };
+    }
 
     // =========================================================================
-    // PROBLEM GENERATOR
+    // PROBLEM CLASS
     // =========================================================================
 
-    const ProblemGenerator = {
-        /** Create a problem object from two numbers */
-        createProblem(a, b) {
-            // Randomly swap positions
+    class Problem {
+        constructor(a, b, gameMode) {
             if (Math.random() > 0.5) [a, b] = [b, a];
-
-            const problem = {
-                a,
-                b,
-                result: a * b,
-                answer: a * b,
-                key: Utils.pairKey(a, b)
-            };
-
-            // In multiplier mode, hide one of the factors
-            if (State.gameMode === 'multiplier') {
-                if (Math.random() > 0.5) {
-                    problem.hidden = 'a';
-                    problem.answer = a;
-                } else {
-                    problem.hidden = 'b';
-                    problem.answer = b;
-                }
+            this.a = a;
+            this.b = b;
+            this.result = a * b;
+            this.key = Utility.pairKey(a, b);
+            this.hidden = null;
+            this.answer = this.result;
+            if (gameMode === 'multiplier') {
+                this.hidden = Math.random() > 0.5 ? 'a' : 'b';
+                this.answer = this.hidden === 'a' ? a : b;
             }
-
-            return problem;
-        },
-
-        /** Generate all problems for Practice All mode */
-        generateAllProblems() {
-            const problems = [];
-            const [minB, maxB] = CONFIG.GAME.MULTIPLIER_RANGE;
-
-            for (let a = CONFIG.GAME.MIN_NUMBER; a <= State.maxNumber; a++) {
-                for (let b = minB; b <= maxB; b++) {
-                    problems.push(this.createProblem(a, b));
-                }
-            }
-
-            return Utils.shuffle(problems);
-        },
-
-        /** Generate problems for Practice One mode */
-        generateOneTableProblems(number) {
-            const problems = [];
-            const [minB, maxB] = CONFIG.GAME.MULTIPLIER_RANGE;
-
-            for (let b = minB; b <= maxB; b++) {
-                problems.push(this.createProblem(number, b));
-            }
-
-            return Utils.shuffle(problems);
-        },
-
-        /** Generate a single random problem for Fixed mode */
-        generateRandomProblem() {
-            let a, b, attempts = 0;
-
-            do {
-                a = Utils.randomInt(CONFIG.GAME.MIN_NUMBER, State.maxNumber);
-                b = Utils.randomInt(CONFIG.GAME.MIN_NUMBER, CONFIG.GAME.MAX_NUMBER);
-                if (Math.random() > 0.5) [a, b] = [b, a];
-                attempts++;
-            } while (State.usedPairs.has(Utils.pairKey(a, b)) && attempts < 100);
-
-            State.usedPairs.add(Utils.pairKey(a, b));
-            return this.createProblem(a, b);
-        },
-
-        /** Get next problem from queue */
-        getNextProblem() {
-            return State.problemQueue.length ? State.problemQueue.shift() : null;
-        },
-
-        /** Calculate total combinations for Practice All mode */
-        calculateTotalCombinations(maxNumber) {
-            return (maxNumber - 1) * 10;
         }
-    };
+
+        getDisplayHTML() {
+            const aDisp = this.hidden === 'a' ? '<span class="unknown">?</span>' : this.a;
+            const bDisp = this.hidden === 'b' ? '<span class="unknown">?</span>' : this.b;
+            return this.hidden ? `${aDisp} × ${bDisp} = ${this.result}` : `${this.a} × ${this.b} = <span class="unknown">?</span>`;
+        }
+
+        getSpeechText(lang) {
+            const a = NumberWords.convert(this.a, lang);
+            const b = NumberWords.convert(this.b, lang);
+            const r = NumberWords.convert(this.result, lang);
+            const phrases = {
+                result: { en: `${a}, times ${b}`, uk: `${a} помножити на ${b}` },
+                a: { en: `What number, times ${b}, equals ${r}`, uk: `Що, помножити на ${b}, дорівнює ${r}` },
+                b: { en: `${a}, times what number, equals ${r}`, uk: `${a}, помножити на що, дорівнює ${r}` }
+            };
+            const key = this.hidden || 'result';
+            return phrases[key][lang] || phrases[key].en;
+        }
+    }
 
     // =========================================================================
-    // UI CONTROLLER
+    // SESSION STRATEGY CLASSES
     // =========================================================================
 
-    const UI = {
-        screens: ['menu', 'settings', 'learn', 'game', 'results'],
+    class SessionStrategy {
+        constructor(state) { this.state = state; }
+        generateProblems() { return []; }
+        getTotalCount() { return 0; }
+        getLabel(t) { return ''; }
+    }
 
-        /** Show a specific screen */
-        showScreen(name) {
-            this.screens.forEach(screen => {
-                Utils.$(`${screen}-screen`).classList.remove('active');
-            });
-            Utils.$(`${name}-screen`).classList.add('active');
-        },
-
-        /** Get translation */
-        t(key) {
-            return TRANSLATIONS[State.uiLanguage][key] || key;
-        },
-
-        /** Update UI language */
-        updateLanguage(lang) {
-            State.uiLanguage = lang;
-            State.voiceLanguage = lang;
-            const t = TRANSLATIONS[lang];
-
-            // Check if Ukrainian voice is available
-            if (lang === 'uk' && !Utils.hasVoice('uk')) {
-                setTimeout(() => Utils.showVoiceInstallHelp(), 300);
+    class FixedSession extends SessionStrategy {
+        generateProblems() {
+            const problems = [], used = new Set();
+            for (let i = 0; i < this.state.totalTasks; i++) {
+                let a, b, attempts = 0;
+                do {
+                    a = Utility.randomInt(CONFIG.GAME.MIN_NUMBER, this.state.maxNumber);
+                    b = Utility.randomInt(CONFIG.GAME.MIN_NUMBER, CONFIG.GAME.MAX_NUMBER);
+                    if (Math.random() > 0.5) [a, b] = [b, a];
+                    attempts++;
+                } while (used.has(Utility.pairKey(a, b)) && attempts < 100);
+                used.add(Utility.pairKey(a, b));
+                problems.push(new Problem(a, b, this.state.gameMode));
             }
+            return problems;
+        }
+        getTotalCount() { return this.state.totalTasks; }
+        getLabel(t) { return `${this.state.totalTasks}`; }
+    }
 
-            // Menu
-            Utils.$('menu-title').textContent = t.menuTitle;
-            Utils.$('btn-play').textContent = t.play;
-            Utils.$('btn-learn').textContent = t.learn;
+    class PracticeAllSession extends SessionStrategy {
+        generateProblems() {
+            const problems = [], [minB, maxB] = CONFIG.GAME.MULTIPLIER_RANGE;
+            for (let a = CONFIG.GAME.MIN_NUMBER; a <= this.state.maxNumber; a++) {
+                for (let b = minB; b <= maxB; b++) {
+                    problems.push(new Problem(a, b, this.state.gameMode));
+                }
+            }
+            return Utility.shuffle(problems);
+        }
+        getTotalCount() { return (this.state.maxNumber - 1) * 10; }
+        getLabel(t) { return t('practiceAll'); }
+    }
 
-            // Settings
+    class PracticeOneSession extends SessionStrategy {
+        generateProblems() {
+            const problems = [], [minB, maxB] = CONFIG.GAME.MULTIPLIER_RANGE;
+            for (let b = minB; b <= maxB; b++) {
+                problems.push(new Problem(this.state.practiceNumber, b, this.state.gameMode));
+            }
+            return Utility.shuffle(problems);
+        }
+        getTotalCount() { return 10; }
+        getLabel(t) { return `${t('tableOf')} ${this.state.practiceNumber}`; }
+    }
+
+    class SessionFactory {
+        static strategies = { fixed: FixedSession, 'practice-all': PracticeAllSession, 'practice-one': PracticeOneSession };
+        static create(type, state) { return new (this.strategies[type] || FixedSession)(state); }
+    }
+
+    // =========================================================================
+    // GAME STATE CLASS
+    // =========================================================================
+
+    class GameState {
+        constructor() { this.reset(); this.maxNumber = 10; this.practiceNumber = 5; this.gameMode = 'result'; this.sessionType = 'fixed'; this.totalTasks = 10; this.maxMistakes = 3; this.voiceEnabled = true; this.voiceLanguage = 'en'; this.uiLanguage = 'en'; }
+
+        reset() {
+            this.currentTask = 0; this.mistakes = 0; this.streak = 0; this.currentAnswer = ''; this.currentProblem = null; this.isProcessing = false;
+            this.clearTimer(this.autoSubmitTimer); this.autoSubmitTimer = null;
+            this.problemQueue = []; this.masteredPairs = new Set(); this.history = [];
+            this.startTime = 0; this.elapsedTime = 0;
+            this.clearTimer(this.timerInterval); this.timerInterval = null;
+        }
+
+        clearTimer(timer) { timer && clearTimeout(timer); }
+        t(key) { return TRANSLATIONS[this.uiLanguage]?.[key] || key; }
+    }
+
+    // =========================================================================
+    // UI CONTROLLER CLASS
+    // =========================================================================
+
+    class UIController {
+        constructor(state, speech) { this.state = state; this.speech = speech; this.screens = ['menu', 'settings', 'learn', 'game', 'results']; }
+
+        showScreen(name) { this.screens.forEach(s => Utility.$(`${s}-screen`).classList.toggle('active', s === name)); }
+
+        updateLanguage(lang) {
+            this.state.uiLanguage = this.state.voiceLanguage = lang;
+            const t = TRANSLATIONS[lang];
+            if (lang === 'uk' && !this.speech.hasVoice('uk')) setTimeout(() => this.showVoiceHelp(), 300);
+
+            // Update all UI text using mapping
+            const textMap = {
+                'menu-title': t.menuTitle, 'btn-play': t.play, 'btn-learn': t.learn, 'btn-start': t.start,
+                'btn-settings-back': t.back, 'btn-learn-back': t.backToMenu, 'btn-check': t.check,
+                'btn-finish': t.finish, 'btn-play-again': t.playAgain, 'btn-results-back': t.backToMenu,
+                'about-title': t.aboutTitle, 'about-goal': t.aboutGoal, 'about-author': t.aboutAuthor
+            };
+            Object.entries(textMap).forEach(([id, text]) => { const el = Utility.$(id); if (el) el.textContent = text; });
+
+            // Selectors
             document.querySelector('#settings-screen h2').textContent = t.settings;
-            document.querySelectorAll('.setting-label')[0].textContent = t.practiceUpTo;
-            document.querySelectorAll('.setting-label')[1].textContent = t.questionType;
-            document.querySelectorAll('.setting-label')[2].textContent = t.sessionType;
+            document.querySelector('#learn-screen h2').textContent = t.learnTables;
+            document.querySelector('#results-screen h2').textContent = t.results;
+            document.querySelector('.learn-hint').textContent = t.learnHint;
 
-            const gameModeSelect = Utils.$('select-game-mode');
+            const labels = document.querySelectorAll('.setting-label');
+            [t.practiceUpTo, t.questionType, t.sessionType].forEach((txt, i) => { if (labels[i]) labels[i].textContent = txt; });
+
+            const gameModeSelect = Utility.$('select-game-mode');
             gameModeSelect.options[0].textContent = t.findResult;
             gameModeSelect.options[1].textContent = t.findMultiplier;
 
-            const sessionSelect = Utils.$('select-session-type');
-            sessionSelect.options[0].textContent = t.fixedTasks;
-            sessionSelect.options[1].textContent = t.practiceAll;
-            sessionSelect.options[2].textContent = t.practiceOne;
+            const sessionSelect = Utility.$('select-session-type');
+            [t.fixedTasks, t.practiceAll, t.practiceOne].forEach((txt, i) => sessionSelect.options[i].textContent = txt);
 
-            // Practice one label
-            const practiceOneLabel = document.querySelector('#practice-one-settings .setting-label');
-            if (practiceOneLabel) practiceOneLabel.textContent = t.selectTable;
+            const practiceLabel = document.querySelector('#practice-one-settings .setting-label');
+            if (practiceLabel) practiceLabel.textContent = t.selectTable;
 
-            // Fixed mode labels
             const fixedLabels = document.querySelectorAll('#fixed-mode-settings .setting-label');
             if (fixedLabels[0]) fixedLabels[0].textContent = t.tasks;
             if (fixedLabels[1]) fixedLabels[1].textContent = t.maxMistakes;
+            Utility.$('select-max-mistakes').options[3].textContent = t.unlimited;
 
-            const mistakesSelect = Utils.$('select-max-mistakes');
-            mistakesSelect.options[3].textContent = t.unlimited;
-
-            Utils.$('btn-start').textContent = t.start;
-            Utils.$('btn-settings-back').textContent = t.back;
-
-            // Learn
-            document.querySelector('#learn-screen h2').textContent = t.learnTables;
-            document.querySelector('.learn-hint').textContent = t.learnHint;
-            Utils.$('btn-learn-back').textContent = t.backToMenu;
-
-            // Game
-            Utils.$('btn-check').textContent = t.check;
-            Utils.$('btn-finish').textContent = t.finish;
-
-            // Results
-            document.querySelector('#results-screen h2').textContent = t.results;
-            Utils.$('btn-play-again').textContent = t.playAgain;
-            Utils.$('btn-results-back').textContent = t.backToMenu;
-
-            // Update combo count
             this.updateComboCount();
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.toggle('selected', btn.dataset.lang === lang));
+        }
 
-            // Update language buttons
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.classList.toggle('selected', btn.dataset.lang === lang);
-            });
+        showVoiceHelp() {
+            const t = TRANSLATIONS[this.state.uiLanguage];
+            Utility.$('voice-install-title').textContent = t.voiceInstallTitle;
+            Utility.$('voice-install-text').textContent = t.voiceInstallText;
+            Utility.$('voice-install-instructions').innerHTML = t.voiceInstall[Utility.getPlatform()] || t.voiceInstall.other;
+            Utility.$('voice-install-overlay').classList.add('show');
+        }
 
-            // Update about
-            Utils.$('about-title').textContent = t.aboutTitle;
-            Utils.$('about-goal').textContent = t.aboutGoal;
-            Utils.$('about-author').textContent = t.aboutAuthor;
-        },
-
-        /** Display the current problem */
         displayProblem() {
-            const p = State.currentProblem;
-            let html;
+            Utility.$('display-problem').innerHTML = this.state.currentProblem.getDisplayHTML();
+            this.speech.speak(this.state.currentProblem.getSpeechText(this.state.voiceLanguage));
+        }
 
-            if (State.gameMode === 'result') {
-                html = `${p.a} × ${p.b} = <span class="unknown">?</span>`;
-            } else {
-                const aDisplay = p.hidden === 'a' ? '<span class="unknown">?</span>' : p.a;
-                const bDisplay = p.hidden === 'b' ? '<span class="unknown">?</span>' : p.b;
-                html = `${aDisplay} × ${bDisplay} = ${p.result}`;
-            }
+        updateProgress(session) {
+            const total = session.getTotalCount();
+            const el = Utility.$('display-mistakes');
+            Utility.$('display-progress').textContent = `${this.state.t('mastered')} ${this.state.masteredPairs.size} / ${total}`;
+            el.textContent = this.state.mistakes > 0 ? `${this.state.t('mistakes')} ${this.state.mistakes} | ${this.state.t('left')} ${this.state.problemQueue.length}` : `${this.state.t('left')} ${this.state.problemQueue.length}`;
+            el.className = this.state.mistakes > 0 ? 'mistakes' : 'remaining';
+        }
 
-            Utils.$('display-problem').innerHTML = html;
-            Utils.speak(Utils.getProblemSpeech(p));
-        },
-
-        /** Update progress display */
-        updateProgress() {
-            const mistakesEl = Utils.$('display-mistakes');
-            let total;
-
-            if (State.sessionType === 'practice-one') {
-                total = 10;
-            } else if (State.sessionType === 'practice-all') {
-                total = ProblemGenerator.calculateTotalCombinations(State.maxNumber);
-            } else {
-                total = State.totalTasks;
-            }
-
-            Utils.$('display-progress').textContent = `${this.t('mastered')} ${State.masteredPairs.size} / ${total}`;
-            mistakesEl.textContent = State.mistakes > 0
-                ? `${this.t('mistakes')} ${State.mistakes} | ${this.t('left')} ${State.problemQueue.length}`
-                : `${this.t('left')} ${State.problemQueue.length}`;
-            mistakesEl.className = State.mistakes > 0 ? 'mistakes' : 'remaining';
-        },
-
-        /** Update timer display */
         updateTimer() {
-            State.elapsedTime = Date.now() - State.startTime;
-            Utils.$('display-timer').textContent = Utils.formatTime(State.elapsedTime);
-        },
+            this.state.elapsedTime = Date.now() - this.state.startTime;
+            Utility.$('display-timer').textContent = Utility.formatTime(this.state.elapsedTime);
+        }
 
-        /** Update combo count display in settings */
         updateComboCount() {
-            const max = parseInt(Utils.$('input-max-number').value);
-            const total = ProblemGenerator.calculateTotalCombinations(max);
-            const template = this.t('practiceAllInfo');
-            Utils.$('display-combo-count').textContent = template.replace('{max}', max).replace('{total}', total);
-        },
+            const max = parseInt(Utility.$('input-max-number').value);
+            const total = (max - 1) * 10;
+            Utility.$('display-combo-count').textContent = this.state.t('practiceAllInfo').replace('{max}', max).replace('{total}', total);
+        }
 
-        /** Show multiplication table for learning */
         showTable(number) {
-            // Update button selection
-            document.querySelectorAll('#learn-selector .number-btn').forEach(btn => {
-                btn.classList.toggle('selected', parseInt(btn.dataset.num) === number);
-            });
+            document.querySelectorAll('#learn-selector .number-btn').forEach(btn => btn.classList.toggle('selected', parseInt(btn.dataset.num) === number));
+            Utility.$('table-title').textContent = `${this.state.t('tableOf')} ${number}`;
+            Utility.$('table-content').innerHTML = Array.from({length: 10}, (_, i) => `<div class="table-row"><span class="multiplier">${number}</span><span class="operator">×</span><span>${i+1}</span><span class="equals">=</span><span class="result">${number * (i+1)}</span></div>`).join('');
+            Utility.$('multiplication-table').style.display = 'block';
+        }
 
-            Utils.$('table-title').textContent = `${this.t('tableOf')} ${number}`;
-
-            let html = '';
-            for (let i = 1; i <= 10; i++) {
-                html += `
-                    <div class="table-row">
-                        <span class="multiplier">${number}</span>
-                        <span class="operator">×</span>
-                        <span>${i}</span>
-                        <span class="equals">=</span>
-                        <span class="result">${number * i}</span>
-                    </div>`;
-            }
-
-            Utils.$('table-content').innerHTML = html;
-            Utils.$('multiplication-table').style.display = 'block';
-        },
-
-        /** Show congratulations popup */
         showCongrats() {
-            const [emoji, text] = CONFIG.CONGRATS_MESSAGES[
-                Utils.randomInt(0, CONFIG.CONGRATS_MESSAGES.length - 1)
-            ];
+            const [emoji, text] = CONFIG.CONGRATS[Utility.randomInt(0, CONFIG.CONGRATS.length - 1)];
+            Utility.$('congrats-emoji').textContent = emoji;
+            Utility.$('congrats-text').textContent = text;
+            Utility.$('congrats-subtext').textContent = `${this.state.streak} correct in a row!`;
+            Utility.$('congrats-overlay').classList.add('show');
+            setTimeout(() => Utility.$('congrats-overlay').classList.remove('show'), CONFIG.TIMING.CONGRATS_DURATION);
+        }
 
-            Utils.$('congrats-emoji').textContent = emoji;
-            Utils.$('congrats-text').textContent = text;
-            Utils.$('congrats-subtext').textContent = `${State.streak} correct in a row!`;
-            Utils.$('congrats-overlay').classList.add('show');
+        showResults(session) {
+            const timeStr = Utility.formatTime(this.state.elapsedTime);
+            const total = session.getTotalCount();
+            const label = session.getLabel(k => this.state.t(k));
 
-            setTimeout(() => {
-                Utils.$('congrats-overlay').classList.remove('show');
-            }, CONFIG.TIMING.CONGRATS_DURATION);
-        },
+            Utility.$('display-score').textContent = `${total} / ${total}`;
+            Utility.$('display-percent').innerHTML = `${this.state.t('masteredIn').replace('{label}', label)} <strong>${timeStr}</strong>`;
+            Utility.$('display-score-summary').classList.add('success');
 
-        /** Show results screen */
-        showResults(success) {
-            const timeStr = Utils.formatTime(State.elapsedTime);
-            const summaryEl = Utils.$('display-score-summary');
-            const gameOverEl = Utils.$('display-game-over');
-
-            // Calculate task count based on session type
-            let taskCount, label;
-            if (State.sessionType === 'practice-one') {
-                taskCount = 10;
-                label = `${this.t('tableOf')} ${State.practiceNumber}`;
-            } else if (State.sessionType === 'practice-all') {
-                taskCount = ProblemGenerator.calculateTotalCombinations(State.maxNumber);
-                label = this.t('practiceAll');
-            } else {
-                taskCount = State.totalTasks;
-                label = `${taskCount}`;
-            }
-
-            Utils.$('display-score').textContent = `${taskCount} / ${taskCount}`;
-            const masteredTemplate = this.t('masteredIn');
-            Utils.$('display-percent').innerHTML = `${masteredTemplate.replace('{label}', label)} <strong>${timeStr}</strong>`;
-            summaryEl.classList.add('success');
-
-            const mistakeCount = State.mistakes;
-            if (mistakeCount > 0) {
-                gameOverEl.textContent = this.t('completedMessage').replace('{count}', mistakeCount);
-            } else {
-                gameOverEl.textContent = this.t('perfectMessage');
-            }
+            const gameOverEl = Utility.$('display-game-over');
+            gameOverEl.textContent = this.state.mistakes > 0 ? this.state.t('completedMessage').replace('{count}', this.state.mistakes) : this.state.t('perfectMessage');
             gameOverEl.className = 'game-over-message success';
             gameOverEl.style.display = 'block';
 
-            // Show only mistakes
-            const mistakes = [];
-            const seen = new Set();
-
-            State.history.forEach(h => {
-                if (!h.correct) {
-                    const key = `${h.problem.a}x${h.problem.b}`;
-                    if (!seen.has(key)) {
-                        seen.add(key);
-                        mistakes.push(h);
-                    }
-                }
+            // Collect unique mistakes
+            const seen = new Set(), mistakes = [];
+            this.state.history.filter(h => !h.correct).forEach(h => {
+                const key = `${h.problem.a}x${h.problem.b}`;
+                if (!seen.has(key)) { seen.add(key); mistakes.push(h); }
             });
 
-            let html = '';
-            if (mistakes.length === 0) {
-                html = `<div class="result-item correct" style="justify-content:center;color:var(--success-dark);font-weight:600">${this.t('noMistakes')}</div>`;
-            } else {
-                mistakes.forEach(h => {
-                    const p = h.problem;
-                    html += `
-                        <div class="result-item wrong">
-                            <span class="result-problem">${p.a} × ${p.b} = <s style="color:var(--error)">${h.userAnswer}</s> → <strong style="color:var(--success)">${p.result}</strong></span>
-                            <span class="result-status wrong">✗</span>
-                        </div>`;
-                });
-            }
+            Utility.$('results-list').innerHTML = mistakes.length === 0
+                ? `<div class="result-item correct" style="justify-content:center;color:var(--success-dark);font-weight:600">${this.state.t('noMistakes')}</div>`
+                : mistakes.map(h => `<div class="result-item wrong"><span class="result-problem">${h.problem.a} × ${h.problem.b} = <s style="color:var(--error)">${h.userAnswer}</s> → <strong style="color:var(--success)">${h.problem.result}</strong></span><span class="result-status wrong">✗</span></div>`).join('');
 
-            Utils.$('results-list').innerHTML = html;
             this.showScreen('results');
-        },
-
-        /** Reset answer display */
-        resetAnswerDisplay() {
-            const el = Utils.$('display-answer');
-            el.textContent = '';
-            el.className = 'answer-display';
-        },
-
-        /** Generate number selector buttons */
-        generateNumberButtons(containerId, onClick) {
-            let html = '';
-            for (let i = CONFIG.GAME.MIN_NUMBER; i <= CONFIG.GAME.MAX_NUMBER; i++) {
-                html += `<button class="number-btn" data-num="${i}">${i}</button>`;
-            }
-            Utils.$(containerId).innerHTML = html;
-
-            Utils.$(containerId).querySelectorAll('.number-btn').forEach(btn => {
-                btn.addEventListener('click', () => onClick(parseInt(btn.dataset.num)));
-            });
-        },
-
-        /** Generate numpad buttons */
-        generateNumpad() {
-            let html = '';
-            for (let i = 1; i <= 9; i++) {
-                html += `<button class="num-btn" data-num="${i}">${i}</button>`;
-            }
-            html += '<button class="num-btn zero" data-num="0">0</button>';
-            html += '<button class="num-btn clear" data-num="clear">C</button>';
-            Utils.$('numpad').innerHTML = html;
         }
-    };
+
+        resetAnswerDisplay() { const el = Utility.$('display-answer'); el.textContent = ''; el.className = 'answer-display'; }
+
+        generateButtons(containerId, onClick) {
+            Utility.$(containerId).innerHTML = Array.from({length: CONFIG.GAME.MAX_NUMBER - CONFIG.GAME.MIN_NUMBER + 1}, (_, i) => `<button class="number-btn" data-num="${i + CONFIG.GAME.MIN_NUMBER}">${i + CONFIG.GAME.MIN_NUMBER}</button>`).join('');
+            Utility.$(containerId).querySelectorAll('.number-btn').forEach(btn => btn.addEventListener('click', () => onClick(parseInt(btn.dataset.num))));
+        }
+
+        generateNumpad() {
+            Utility.$('numpad').innerHTML = Array.from({length: 9}, (_, i) => `<button class="num-btn" data-num="${i+1}">${i+1}</button>`).join('') + '<button class="num-btn zero" data-num="0">0</button><button class="num-btn clear" data-num="clear">C</button>';
+        }
+    }
 
     // =========================================================================
-    // GAME CONTROLLER
+    // GAME CONTROLLER CLASS
     // =========================================================================
 
-    const Game = {
-        /** Start a new game session */
+    class GameController {
+        constructor(state, ui, speech) {
+            this.state = state;
+            this.ui = ui;
+            this.speech = speech;
+            this.session = null;
+        }
+
         start() {
-            // Load settings
-            State.maxNumber = parseInt(Utils.$('input-max-number').value);
-            State.gameMode = Utils.$('select-game-mode').value;
-            State.sessionType = Utils.$('select-session-type').value;
-            State.totalTasks = parseInt(Utils.$('select-total-tasks').value);
-            State.maxMistakes = parseInt(Utils.$('select-max-mistakes').value);
-            // Voice is always enabled, language is set from menu
+            this.state.maxNumber = parseInt(Utility.$('input-max-number').value);
+            this.state.gameMode = Utility.$('select-game-mode').value;
+            this.state.sessionType = Utility.$('select-session-type').value;
+            this.state.totalTasks = parseInt(Utility.$('select-total-tasks').value);
+            this.state.maxMistakes = parseInt(Utility.$('select-max-mistakes').value);
+            this.state.reset();
 
-            // Reset state
-            State.reset();
+            this.session = SessionFactory.create(this.state.sessionType, this.state);
+            this.state.problemQueue = this.session.generateProblems();
+            this.state.currentProblem = this.state.problemQueue.shift();
 
-            // Generate problems based on session type
-            if (State.sessionType === 'practice-all') {
-                State.problemQueue = ProblemGenerator.generateAllProblems();
-            } else if (State.sessionType === 'practice-one') {
-                State.problemQueue = ProblemGenerator.generateOneTableProblems(State.practiceNumber);
-            } else {
-                // Fixed mode: generate queue of random problems
-                State.problemQueue = [];
-                for (let i = 0; i < State.totalTasks; i++) {
-                    State.problemQueue.push(ProblemGenerator.generateRandomProblem());
-                }
-            }
+            this.state.startTime = Date.now();
+            this.state.timerInterval = setInterval(() => this.ui.updateTimer(), CONFIG.TIMING.TIMER_INTERVAL);
+            Utility.$('display-timer').textContent = '00:00';
 
-            // Get first problem from queue
-            State.currentProblem = State.problemQueue.shift();
+            this.ui.displayProblem();
+            this.ui.updateProgress(this.session);
+            this.ui.resetAnswerDisplay();
+            this.ui.showScreen('game');
+        }
 
-            // Start timer
-            State.startTime = Date.now();
-            State.timerInterval = setInterval(() => UI.updateTimer(), CONFIG.TIMING.TIMER_INTERVAL);
-            Utils.$('display-timer').textContent = '00:00';
-
-            // Update UI
-            UI.displayProblem();
-            UI.updateProgress();
-            UI.resetAnswerDisplay();
-            UI.showScreen('game');
-        },
-
-        /** Check the current answer */
         async checkAnswer() {
-            if (!State.currentAnswer || State.isProcessing) return;
-            State.isProcessing = true;
+            if (!this.state.currentAnswer || this.state.isProcessing) return;
+            this.state.isProcessing = true;
+            this.state.clearTimer(this.state.autoSubmitTimer);
+            this.state.autoSubmitTimer = null;
 
-            // Clear auto-submit timer
-            if (State.autoSubmitTimer) {
-                clearTimeout(State.autoSubmitTimer);
-                State.autoSubmitTimer = null;
-            }
+            const userAnswer = parseInt(this.state.currentAnswer);
+            const isCorrect = userAnswer === this.state.currentProblem.answer;
+            this.state.history.push({ problem: this.state.currentProblem, userAnswer, correct: isCorrect });
 
-            const userAnswer = parseInt(State.currentAnswer);
-            const isCorrect = userAnswer === State.currentProblem.answer;
-
-            // Record in history
-            State.history.push({
-                problem: State.currentProblem,
-                userAnswer,
-                correct: isCorrect
-            });
-
-            // Update answer display
-            const answerEl = Utils.$('display-answer');
+            const answerEl = Utility.$('display-answer');
             answerEl.classList.add(isCorrect ? 'correct' : 'wrong');
 
             if (isCorrect) {
-                State.streak++;
-                State.masteredPairs.add(State.currentProblem.key);
-                // Show checkmark for correct answer
-                answerEl.innerHTML = `${State.currentAnswer} <span style="color:var(--success);font-size:48px;margin-left:12px">✓</span>`;
-                await Utils.speak(Utils.getCorrectSpeech(State.currentProblem.answer));
-                if (State.streak > 0 && State.streak % 5 === 0) {
-                    UI.showCongrats();
-                }
+                this.state.streak++;
+                this.state.masteredPairs.add(this.state.currentProblem.key);
+                answerEl.innerHTML = `${this.state.currentAnswer} <span style="color:var(--success);font-size:48px;margin-left:12px">✓</span>`;
+                const word = NumberWords.convert(this.state.currentProblem.answer, this.state.voiceLanguage);
+                await this.speech.speak(this.state.voiceLanguage === 'uk' ? `${word}, правильно!` : `${word}, correct!`);
+                if (this.state.streak % 5 === 0) this.ui.showCongrats();
             } else {
-                State.streak = 0;
-                State.mistakes++;
-
-                // Show correct answer (big and green)
-                answerEl.innerHTML = `<span style="text-decoration:line-through;color:var(--gray-400)">${State.currentAnswer}</span> <span style="color:var(--gray-400);font-size:24px">→</span> <span style="color:var(--success);font-size:56px;font-weight:800">${State.currentProblem.answer}</span>`;
-                await Utils.speak(Utils.getWrongSpeech(State.currentProblem.answer));
-
-                // Re-queue problem to repeat later (only when wrong)
-                const retryProblem = ProblemGenerator.createProblem(
-                    State.currentProblem.a,
-                    State.currentProblem.b
-                );
+                this.state.streak = 0;
+                this.state.mistakes++;
+                answerEl.innerHTML = `<span style="text-decoration:line-through;color:var(--gray-400)">${this.state.currentAnswer}</span> <span style="color:var(--gray-400);font-size:24px">→</span> <span style="color:var(--success);font-size:56px;font-weight:800">${this.state.currentProblem.answer}</span>`;
+                const word = NumberWords.convert(this.state.currentProblem.answer, this.state.voiceLanguage);
+                await this.speech.speak(this.state.voiceLanguage === 'uk' ? `Відповідь: ${word}` : `The answer is ${word}`);
+                // Re-queue problem
+                const retry = new Problem(this.state.currentProblem.a, this.state.currentProblem.b, this.state.gameMode);
                 const [minPos, maxPos] = CONFIG.GAME.RETRY_POSITION;
-                const position = Math.min(State.problemQueue.length, Utils.randomInt(minPos, maxPos));
-                State.problemQueue.splice(position, 0, retryProblem);
+                const pos = Math.min(this.state.problemQueue.length, Utility.randomInt(minPos, maxPos));
+                this.state.problemQueue.splice(pos, 0, retry);
             }
 
-            // Game ends only when all problems are mastered (queue empty)
-            const gameOver = State.problemQueue.length === 0;
+            await new Promise(r => setTimeout(r, isCorrect ? CONFIG.TIMING.CORRECT_DELAY : CONFIG.TIMING.WRONG_DELAY));
 
-            // Wait minimum delay then proceed
-            const minDelay = isCorrect ? CONFIG.TIMING.CORRECT_DELAY : CONFIG.TIMING.WRONG_DELAY;
-            await new Promise(resolve => setTimeout(resolve, minDelay));
-
-            if (gameOver) {
-                if (State.timerInterval) {
-                    clearInterval(State.timerInterval);
-                    State.timerInterval = null;
-                }
-                State.elapsedTime = Date.now() - State.startTime;
-                UI.showResults(true);
+            if (this.state.problemQueue.length === 0) {
+                this.state.clearTimer(this.state.timerInterval);
+                this.state.timerInterval = null;
+                this.state.elapsedTime = Date.now() - this.state.startTime;
+                this.ui.showResults(this.session);
             } else {
-                State.currentTask++;
-                State.currentAnswer = '';
-                State.currentProblem = ProblemGenerator.getNextProblem();
-                UI.displayProblem();
-                UI.updateProgress();
-                UI.resetAnswerDisplay();
+                this.state.currentTask++;
+                this.state.currentAnswer = '';
+                this.state.currentProblem = this.state.problemQueue.shift();
+                this.ui.displayProblem();
+                this.ui.updateProgress(this.session);
+                this.ui.resetAnswerDisplay();
             }
-            State.isProcessing = false;
-        },
+            this.state.isProcessing = false;
+        }
 
-        /** Handle numpad input */
-        handleNumpadInput(value) {
-            if (State.isProcessing) return;
+        handleInput(value) {
+            if (this.state.isProcessing) return;
+            this.state.clearTimer(this.state.autoSubmitTimer);
+            this.state.autoSubmitTimer = null;
 
-            // Clear any pending auto-submit timer
-            if (State.autoSubmitTimer) {
-                clearTimeout(State.autoSubmitTimer);
-                State.autoSubmitTimer = null;
-            }
+            this.state.currentAnswer = value === 'clear' ? '' : (this.state.currentAnswer.length < 3 ? this.state.currentAnswer + value : this.state.currentAnswer);
+            Utility.$('display-answer').textContent = this.state.currentAnswer;
+            Utility.$('display-answer').className = 'answer-display';
 
-            if (value === 'clear') {
-                State.currentAnswer = '';
-            } else if (State.currentAnswer.length < 3) {
-                State.currentAnswer += value;
-            }
-
-            Utils.$('display-answer').textContent = State.currentAnswer;
-            Utils.$('display-answer').className = 'answer-display';
-
-            // Auto-submit on correct answer (immediate)
-            if (State.currentAnswer && parseInt(State.currentAnswer) === State.currentProblem.answer) {
+            if (this.state.currentAnswer && parseInt(this.state.currentAnswer) === this.state.currentProblem.answer) {
                 this.checkAnswer();
-            } else if (State.currentAnswer) {
-                // Auto-submit after delay for wrong answers (anti-cheat)
-                State.autoSubmitTimer = setTimeout(() => {
-                    if (State.currentAnswer && !State.isProcessing) {
-                        this.checkAnswer();
-                    }
-                }, CONFIG.TIMING.AUTO_SUBMIT_DELAY);
-            }
-        },
-
-        /** Handle keyboard input */
-        handleKeyboardInput(event) {
-            if (!Utils.$('game-screen').classList.contains('active')) return;
-            if (State.isProcessing) return;
-
-            // Clear any pending auto-submit timer
-            if (State.autoSubmitTimer) {
-                clearTimeout(State.autoSubmitTimer);
-                State.autoSubmitTimer = null;
-            }
-
-            if (event.key >= '0' && event.key <= '9' && State.currentAnswer.length < 3) {
-                State.currentAnswer += event.key;
-                Utils.$('display-answer').textContent = State.currentAnswer;
-                Utils.$('display-answer').className = 'answer-display';
-
-                // Auto-submit on correct answer (immediate)
-                if (parseInt(State.currentAnswer) === State.currentProblem.answer) {
-                    this.checkAnswer();
-                } else if (State.currentAnswer) {
-                    // Auto-submit after delay for wrong answers (anti-cheat)
-                    State.autoSubmitTimer = setTimeout(() => {
-                        if (State.currentAnswer && !State.isProcessing) {
-                            this.checkAnswer();
-                        }
-                    }, CONFIG.TIMING.AUTO_SUBMIT_DELAY);
-                }
-            } else if (event.key === 'Backspace') {
-                State.currentAnswer = State.currentAnswer.slice(0, -1);
-                Utils.$('display-answer').textContent = State.currentAnswer;
-            } else if (event.key === 'Enter') {
-                this.checkAnswer();
+            } else if (this.state.currentAnswer) {
+                this.state.autoSubmitTimer = setTimeout(() => { if (this.state.currentAnswer && !this.state.isProcessing) this.checkAnswer(); }, CONFIG.TIMING.AUTO_SUBMIT_DELAY);
             }
         }
-    };
 
-    // =========================================================================
-    // INITIALIZATION
-    // =========================================================================
+        handleKeyboard(e) {
+            if (!Utility.$('game-screen').classList.contains('active') || this.state.isProcessing) return;
+            if (e.key >= '0' && e.key <= '9') this.handleInput(e.key);
+            else if (e.key === 'Backspace') { this.state.currentAnswer = this.state.currentAnswer.slice(0, -1); Utility.$('display-answer').textContent = this.state.currentAnswer; }
+            else if (e.key === 'Enter') this.checkAnswer();
+        }
 
-    const init = () => {
-        // Generate UI elements
-        UI.generateNumberButtons('learn-selector', num => UI.showTable(num));
-        UI.generateNumberButtons('practice-one-selector', num => {
-            State.practiceNumber = num;
-            Utils.$('practice-one-selector').querySelectorAll('.number-btn').forEach(btn => {
-                btn.classList.toggle('selected', parseInt(btn.dataset.num) === num);
-            });
-        });
-        UI.generateNumpad();
+        finish() {
+            this.state.clearTimer(this.state.timerInterval);
+            this.state.timerInterval = null;
+            this.speech.cancel();
+            this.ui.showScreen('menu');
+        }
 
-        // Set default selection for practice-one
-        setTimeout(() => {
-            Utils.$('practice-one-selector').querySelectorAll('.number-btn').forEach(btn => {
-                btn.classList.toggle('selected', parseInt(btn.dataset.num) === State.practiceNumber);
-            });
-        }, 0);
-
-        // Menu buttons
-        Utils.$('btn-play').addEventListener('click', () => UI.showScreen('settings'));
-        Utils.$('btn-learn').addEventListener('click', () => {
-            Utils.$('multiplication-table').style.display = 'none';
-            document.querySelectorAll('#learn-selector .number-btn').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-            UI.showScreen('learn');
-        });
-
-        // Settings controls
-        Utils.$('input-max-number').addEventListener('input', e => {
-            Utils.$('display-max-number').textContent = e.target.value;
-            UI.updateComboCount();
-        });
-
-        Utils.$('select-session-type').addEventListener('change', e => {
-            const value = e.target.value;
-            Utils.$('fixed-mode-settings').classList.toggle('hidden', value !== 'fixed');
-            Utils.$('practice-one-settings').style.display = value === 'practice-one' ? 'block' : 'none';
-        });
-
-        // Language selector
-        document.querySelectorAll('.lang-btn').forEach(btn => {
-            btn.addEventListener('click', () => UI.updateLanguage(btn.dataset.lang));
-        });
-
-        // About button
-        Utils.$('btn-about').addEventListener('click', () => {
-            Utils.$('about-overlay').classList.add('show');
-        });
-        Utils.$('btn-about-close').addEventListener('click', () => {
-            Utils.$('about-overlay').classList.remove('show');
-        });
-        Utils.$('about-overlay').addEventListener('click', e => {
-            if (e.target === Utils.$('about-overlay')) {
-                Utils.$('about-overlay').classList.remove('show');
-            }
-        });
-
-        // Voice install popup
-        const closeVoiceInstall = () => Utils.$('voice-install-overlay').classList.remove('show');
-        Utils.$('btn-voice-install-close').addEventListener('click', closeVoiceInstall);
-        Utils.$('btn-voice-install-ok').addEventListener('click', closeVoiceInstall);
-        Utils.$('voice-install-overlay').addEventListener('click', e => {
-            if (e.target === Utils.$('voice-install-overlay')) closeVoiceInstall();
-        });
-
-        // Navigation buttons
-        Utils.$('btn-settings-back').addEventListener('click', () => UI.showScreen('menu'));
-        Utils.$('btn-learn-back').addEventListener('click', () => UI.showScreen('menu'));
-        Utils.$('btn-results-back').addEventListener('click', () => {
-            Utils.$('display-score-summary').classList.remove('success');
-            UI.showScreen('menu');
-        });
-
-        // Game buttons
-        Utils.$('btn-start').addEventListener('click', () => Game.start());
-        Utils.$('btn-check').addEventListener('click', () => Game.checkAnswer());
-        Utils.$('btn-finish').addEventListener('click', () => {
-            if (State.timerInterval) {
-                clearInterval(State.timerInterval);
-                State.timerInterval = null;
-            }
-            window.speechSynthesis && window.speechSynthesis.cancel();
-            UI.showScreen('menu');
-        });
-        Utils.$('btn-voice-toggle').addEventListener('click', () => {
-            State.voiceEnabled = !State.voiceEnabled;
-            Utils.$('btn-voice-toggle').textContent = State.voiceEnabled ? '🔊' : '🔇';
-            Utils.$('btn-voice-toggle').classList.toggle('off', !State.voiceEnabled);
-            if (!State.voiceEnabled) {
-                window.speechSynthesis && window.speechSynthesis.cancel();
-            }
-        });
-        Utils.$('btn-play-again').addEventListener('click', () => {
-            Utils.$('display-score-summary').classList.remove('success');
-            UI.showScreen('settings');
-        });
-
-        // Numpad events
-        Utils.$('numpad').querySelectorAll('.num-btn').forEach(btn => {
-            btn.addEventListener('click', () => Game.handleNumpadInput(btn.dataset.num));
-        });
-
-        // Keyboard events
-        document.addEventListener('keydown', e => Game.handleKeyboardInput(e));
-
-        // Initialize displays
-        UI.updateComboCount();
-        UI.updateLanguage('en');
-    };
-
-    // Load voices (they load asynchronously)
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.getVoices();
-        window.speechSynthesis.onvoiceschanged = () => {
-            window.speechSynthesis.getVoices();
-        };
+        toggleVoice() {
+            this.state.voiceEnabled = !this.state.voiceEnabled;
+            Utility.$('btn-voice-toggle').textContent = this.state.voiceEnabled ? '🔊' : '🔇';
+            Utility.$('btn-voice-toggle').classList.toggle('off', !this.state.voiceEnabled);
+            if (!this.state.voiceEnabled) this.speech.cancel();
+        }
     }
 
-    // Start the app
-    init();
+    // =========================================================================
+    // APPLICATION CLASS
+    // =========================================================================
+
+    class Application {
+        constructor() {
+            this.state = new GameState();
+            this.speech = new SpeechService(this.state);
+            this.ui = new UIController(this.state, this.speech);
+            this.game = new GameController(this.state, this.ui, this.speech);
+        }
+
+        init() {
+            // Generate UI
+            this.ui.generateButtons('learn-selector', num => this.ui.showTable(num));
+            this.ui.generateButtons('practice-one-selector', num => {
+                this.state.practiceNumber = num;
+                Utility.$('practice-one-selector').querySelectorAll('.number-btn').forEach(btn => btn.classList.toggle('selected', parseInt(btn.dataset.num) === num));
+            });
+            this.ui.generateNumpad();
+            setTimeout(() => Utility.$('practice-one-selector').querySelectorAll('.number-btn').forEach(btn => btn.classList.toggle('selected', parseInt(btn.dataset.num) === this.state.practiceNumber)), 0);
+
+            // Event bindings
+            const on = (id, fn) => Utility.$(id)?.addEventListener('click', fn);
+            on('btn-play', () => this.ui.showScreen('settings'));
+            on('btn-learn', () => { Utility.$('multiplication-table').style.display = 'none'; document.querySelectorAll('#learn-selector .number-btn').forEach(b => b.classList.remove('selected')); this.ui.showScreen('learn'); });
+            on('btn-start', () => this.game.start());
+            on('btn-check', () => this.game.checkAnswer());
+            on('btn-finish', () => this.game.finish());
+            on('btn-voice-toggle', () => this.game.toggleVoice());
+            on('btn-settings-back', () => this.ui.showScreen('menu'));
+            on('btn-learn-back', () => this.ui.showScreen('menu'));
+            on('btn-results-back', () => { Utility.$('display-score-summary').classList.remove('success'); this.ui.showScreen('menu'); });
+            on('btn-play-again', () => { Utility.$('display-score-summary').classList.remove('success'); this.ui.showScreen('settings'); });
+
+            // About overlay
+            on('btn-about', () => Utility.$('about-overlay').classList.add('show'));
+            on('btn-about-close', () => Utility.$('about-overlay').classList.remove('show'));
+            Utility.$('about-overlay').addEventListener('click', e => { if (e.target === Utility.$('about-overlay')) Utility.$('about-overlay').classList.remove('show'); });
+
+            // Voice install overlay
+            const closeVoice = () => Utility.$('voice-install-overlay').classList.remove('show');
+            on('btn-voice-install-close', closeVoice);
+            on('btn-voice-install-ok', closeVoice);
+            Utility.$('voice-install-overlay').addEventListener('click', e => { if (e.target === Utility.$('voice-install-overlay')) closeVoice(); });
+
+            // Settings
+            Utility.$('input-max-number').addEventListener('input', e => { Utility.$('display-max-number').textContent = e.target.value; this.ui.updateComboCount(); });
+            Utility.$('select-session-type').addEventListener('change', e => {
+                Utility.$('fixed-mode-settings').classList.toggle('hidden', e.target.value !== 'fixed');
+                Utility.$('practice-one-settings').style.display = e.target.value === 'practice-one' ? 'block' : 'none';
+            });
+
+            // Language
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', () => this.ui.updateLanguage(btn.dataset.lang)));
+
+            // Numpad
+            Utility.$('numpad').querySelectorAll('.num-btn').forEach(btn => btn.addEventListener('click', () => this.game.handleInput(btn.dataset.num)));
+
+            // Keyboard
+            document.addEventListener('keydown', e => this.game.handleKeyboard(e));
+
+            // Init
+            this.ui.updateComboCount();
+            this.ui.updateLanguage('en');
+
+            // Load voices
+            if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices(); }
+        }
+    }
+
+    // Start
+    new Application().init();
 })();
 </script>
 </body>
