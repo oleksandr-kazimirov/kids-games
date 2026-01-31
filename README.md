@@ -50,4 +50,4 @@ We'll review and respond as soon as possible.
 
 ---
 
-**Powered by Claude AI (Anthropic) and Oleksandr Kazimirov**
+**Oleksandr Kazimirov & Claude AI**

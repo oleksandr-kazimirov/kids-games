@@ -1,7 +1,4 @@
-<!--
-    Multiplication Game for Kids
-    Powered by Claude AI (Anthropic) and Oleksandr Kazimirov
--->
+<!-- Multiplication Game | Oleksandr Kazimirov & Claude AI -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,6 +49,7 @@
             border-radius: var(--radius-xl);
             padding: 32px;
             box-shadow: var(--shadow);
+            position: relative;
         }
 
         .screen.active { display: block; animation: fadeIn .3s ease; }
@@ -396,6 +394,71 @@
             box-shadow: var(--shadow-btn);
         }
 
+        /* About Button & Overlay */
+        .btn-about {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--gray-300);
+            background: #fff;
+            color: var(--gray-600);
+            font-size: 18px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .btn-about:hover { border-color: var(--primary); color: var(--primary); }
+
+        .about-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .3s, visibility .3s;
+        }
+
+        .about-overlay.show { opacity: 1; visibility: visible; }
+
+        .about-popup {
+            background: #fff;
+            padding: 32px;
+            border-radius: var(--radius-xl);
+            max-width: 320px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,.3);
+        }
+
+        .about-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: var(--gray-100);
+            border-radius: 50%;
+            font-size: 20px;
+            color: var(--gray-600);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .about-close:hover { background: var(--gray-200); }
+
+        .about-popup h3 { margin-bottom: 16px; color: var(--gray-800); }
+        .about-text { color: var(--gray-600); margin-bottom: 16px; line-height: 1.5; }
+        .about-author { color: var(--gray-800); font-weight: 600; margin-bottom: 8px; }
+        .about-powered { color: var(--gray-400); font-size: 12px; }
+
         /* Learn Screen */
         .multiplication-table {
             background: linear-gradient(135deg, #FFF8E1, #FFECB3);
@@ -496,6 +559,7 @@
             </div>
             <button id="btn-play" class="btn btn-primary">PLAY</button>
             <button id="btn-learn" class="btn btn-secondary">LEARN</button>
+            <button id="btn-about" class="btn-about">ⓘ</button>
         </div>
 
         <!-- Settings Screen -->
@@ -617,6 +681,17 @@
         </div>
     </div>
 
+    <!-- About Overlay -->
+    <div id="about-overlay" class="about-overlay">
+        <div class="about-popup">
+            <button id="btn-about-close" class="about-close">×</button>
+            <h3 id="about-title">About</h3>
+            <p id="about-goal" class="about-text"></p>
+            <p id="about-author" class="about-author"></p>
+            <p class="about-powered">powered by AI</p>
+        </div>
+    </div>
+
 <script>
 /**
  * Multiplication Game for Kids
@@ -695,7 +770,10 @@
             perfectMessage: 'Perfect! No mistakes!',
             completedMessage: 'Completed with {count} mistake(s) corrected!',
             noMistakes: 'No mistakes! Perfect!',
-            masteredIn: '{label} mastered in'
+            masteredIn: '{label} mastered in',
+            aboutTitle: 'About',
+            aboutGoal: 'A fun game to help children learn multiplication tables through practice. Answer problems, learn from mistakes, and master all tables!',
+            aboutAuthor: 'by O. Kazimirov'
         },
         uk: {
             menuTitle: 'Гра на Множення',
@@ -731,7 +809,10 @@
             perfectMessage: 'Чудово! Без помилок!',
             completedMessage: 'Завершено з {count} виправленими помилками!',
             noMistakes: 'Без помилок! Чудово!',
-            masteredIn: '{label} вивчено за'
+            masteredIn: '{label} вивчено за',
+            aboutTitle: 'Про гру',
+            aboutGoal: 'Весела гра для вивчення таблиці множення. Розв\'язуй приклади, вчись на помилках та опануй всі таблиці!',
+            aboutAuthor: 'автор О. Казіміров'
         }
     };
 
@@ -842,16 +923,16 @@
             if (State.gameMode === 'result') {
                 return lang === 'uk'
                     ? `${a} помножити на ${b}`
-                    : `${a} times ${b}`;
+                    : `${a}, times ${b}`;
             } else {
                 if (problem.hidden === 'a') {
                     return lang === 'uk'
-                        ? `Що помножити на ${b} дорівнює ${result}`
-                        : `What times ${b} equals ${result}`;
+                        ? `Що, помножити на ${b}, дорівнює ${result}`
+                        : `What number, times ${b}, equals ${result}`;
                 } else {
                     return lang === 'uk'
-                        ? `${a} помножити на що дорівнює ${result}`
-                        : `${a} times what equals ${result}`;
+                        ? `${a}, помножити на що, дорівнює ${result}`
+                        : `${a}, times what number, equals ${result}`;
                 }
             }
         },
@@ -1098,6 +1179,11 @@
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.toggle('selected', btn.dataset.lang === lang);
             });
+
+            // Update about
+            Utils.$('about-title').textContent = t.aboutTitle;
+            Utils.$('about-goal').textContent = t.aboutGoal;
+            Utils.$('about-author').textContent = t.aboutAuthor;
         },
 
         /** Display the current problem */
@@ -1494,6 +1580,19 @@
             btn.addEventListener('click', () => UI.updateLanguage(btn.dataset.lang));
         });
 
+        // About button
+        Utils.$('btn-about').addEventListener('click', () => {
+            Utils.$('about-overlay').classList.add('show');
+        });
+        Utils.$('btn-about-close').addEventListener('click', () => {
+            Utils.$('about-overlay').classList.remove('show');
+        });
+        Utils.$('about-overlay').addEventListener('click', e => {
+            if (e.target === Utils.$('about-overlay')) {
+                Utils.$('about-overlay').classList.remove('show');
+            }
+        });
+
         // Navigation buttons
         Utils.$('btn-settings-back').addEventListener('click', () => UI.showScreen('menu'));
         Utils.$('btn-learn-back').addEventListener('click', () => UI.showScreen('menu'));
@@ -1528,6 +1627,7 @@
 
         // Initialize displays
         UI.updateComboCount();
+        UI.updateLanguage('en');
     };
 
     // Load voices (they load asynchronously)
