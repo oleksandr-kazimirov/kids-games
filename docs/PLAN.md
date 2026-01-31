@@ -1,6 +1,6 @@
 # Multiplication Game — Implementation Plan
 
-> *Made with love for little ones who enjoy learning* ❤️
+> *Made with love for little ones who enjoy learning*
 
 ---
 
@@ -13,7 +13,7 @@ A tablet-optimized multiplication learning game for children (ages 7-9) built as
 - Works offline
 - Touch-friendly for tablets
 - Responsive for all screen sizes
-- Optional voice (reads problems aloud in English or Ukrainian)
+- Voice reads problems aloud (English or Ukrainian)
 
 ---
 
@@ -31,7 +31,7 @@ A tablet-optimized multiplication learning game for children (ages 7-9) built as
 | Mode | Description | Best For |
 |------|-------------|----------|
 | **Fixed Tasks** | Set number of random problems | Quick practice |
-| **Practice All** | All tables from 2 to max (e.g., max=5 → 40 problems) | Complete mastery |
+| **Practice All** | All tables from 2 to max | Complete mastery |
 | **Practice One** | Single table (e.g., 7×1 through 7×10) | Targeted practice |
 
 **All modes:** Wrong answers repeat until correct! Game ends only when ALL problems are mastered.
@@ -49,8 +49,6 @@ A tablet-optimized multiplication learning game for children (ages 7-9) built as
 | Tasks (Fixed only) | 5, 10, 15, 20 | 10 |
 | Max Mistakes (Fixed only) | 1, 2, 3, Unlimited | 3 |
 
-**Note:** Language is selected on the menu screen. Voice is always enabled and uses the selected language.
-
 ---
 
 ## 4. Screens
@@ -63,7 +61,7 @@ MENU ──► SETTINGS ──► GAME ──► RESULTS
 
 | Screen | Purpose |
 |--------|---------|
-| **Menu** | Play or Learn buttons |
+| **Menu** | Language selector, Play/Learn buttons |
 | **Settings** | Configure game options |
 | **Learn** | View multiplication tables |
 | **Game** | Solve problems with numpad |
@@ -74,21 +72,23 @@ MENU ──► SETTINGS ──► GAME ──► RESULTS
 ## 5. Game Screen Layout
 
 ```
-┌─────────────────────────────────┐
-│  Mastered: 5/40   00:45   ←3    │
-├─────────────────────────────────┤
-│         7  ×  8  =  ?           │
-├─────────────────────────────────┤
-│            [ 56 ]               │
-├─────────────────────────────────┤
-│   [ 1 ]  [ 2 ]  [ 3 ]          │
-│   [ 4 ]  [ 5 ]  [ 6 ]          │
-│   [ 7 ]  [ 8 ]  [ 9 ]          │
-│   [    0    ]   [ C ]          │
-├─────────────────────────────────┤
-│         [ CHECK ]               │
-│         [ FINISH ]              │
-└─────────────────────────────────┘
+┌─────────────────────────────────────┐
+│ Mastered: 5/40  00:45  Left: 35  🔊 │  <- voice toggle in header
+├─────────────────────────────────────┤
+│           7  ×  8  =  ?             │
+├─────────────────────────────────────┤
+│              [ 56 ]                 │
+├─────────────────────────────────────┤
+│       [ 1 ]  [ 2 ]  [ 3 ]          │
+│       [ 4 ]  [ 5 ]  [ 6 ]          │
+│       [ 7 ]  [ 8 ]  [ 9 ]          │
+│         [   0   ]   [ C ]          │
+├─────────────────────────────────────┤
+│    ┌─────────────────────┐         │
+│    │       CHECK         │  GREEN   │
+│    └─────────────────────┘         │
+│            Finish          subtle   │
+└─────────────────────────────────────┘
 ```
 
 ---
@@ -99,23 +99,35 @@ MENU ──► SETTINGS ──► GAME ──► RESULTS
 Child enters digits
        │
        ▼
-   Correct? ──► YES ──► Auto-submit (no CHECK needed!)
+   Correct? ──► YES ──► Auto-submit immediately
        │               Show green ✓ checkmark
-       │               Green flash → Next problem
+       │               Voice: "fifty-six, correct!"
+       │               Wait 500ms → Next problem
        │               Congrats popup (every 5 streak)
        │
-       └──► NO ──► Must click CHECK
-                   Red shake + show correct (5 sec)
-                   Big green correct answer
-                   Re-queue (practice modes)
+       └──► NO ──► Auto-submit after 2 seconds (anti-cheat)
+                   OR click CHECK button
+                   Red shake + show correct answer
+                   Voice: "The answer is fifty-six"
+                   Wait 1000ms → Re-queue problem
                    Next problem
 ```
 
-**Auto-submit:** Correct answers submit instantly — no button click needed!
+**Auto-submit:**
+- Correct answers submit instantly
+- Wrong answers auto-submit after 2 seconds (prevents cheating)
 
 ---
 
 ## 7. Design
+
+### Button Hierarchy (UX Standards)
+
+| Type | Style | Examples |
+|------|-------|----------|
+| Primary Action | Green button | START, CHECK, PLAY AGAIN |
+| Secondary Action | Blue button | PLAY, LEARN |
+| Navigation/Cancel | Text link | Back, Finish |
 
 ### Colors
 
@@ -129,21 +141,29 @@ Child enters digits
 ### Animations
 
 - Screen transitions: fade + slide
-- Correct: green glow
+- Correct: green glow + checkmark
 - Wrong: shake
 - Congrats: pop-in
 
 ---
 
-## 8. Code Structure
+## 8. Code Architecture (OOP)
 
 ```javascript
-CONFIG           // Settings & constants
-Utils            // Helper functions
-State            // Application state
-ProblemGenerator // Create problems
-UI               // DOM updates
-Game             // Game logic
+// Classes
+Utility          // Static helpers ($, randomInt, shuffle, formatTime)
+SpeechService    // Voice handling (speak, hasVoice, cancel)
+NumberWords      // Number-to-word conversion
+Problem          // Problem data, display HTML, speech text
+SessionStrategy  // Base class for session types
+  ├─ FixedSession
+  ├─ PracticeAllSession
+  └─ PracticeOneSession
+SessionFactory   // Creates session by type
+GameState        // Centralized state management
+UIController     // All DOM operations
+GameController   // Game logic
+Application      // Main entry point
 ```
 
 ---
@@ -152,10 +172,12 @@ Game             // Game logic
 
 ```
 kids-games/
+├── CLAUDE.md
 ├── README.md
 ├── LICENSE
 ├── docs/
-│   └── PLAN.md
+│   ├── PLAN.md
+│   └── FEATURES.md
 └── multiplication/
     └── multiplication-game.html
 ```
@@ -167,25 +189,32 @@ kids-games/
 - [ ] Settings save correctly
 - [ ] Result mode: `A × B = ?`
 - [ ] Multiplier mode: `? × B = Z`
-- [ ] Auto-submit on correct answer
-- [ ] Wrong answer shows 5 sec with big green correct
-- [ ] Fixed mode ends correctly
+- [ ] Auto-submit on correct answer (immediate)
+- [ ] Auto-submit on wrong answer (2 sec delay)
+- [ ] Wrong answer shows correct with green text
 - [ ] Practice modes retry wrong answers
 - [ ] Timer works in all modes
 - [ ] Results show mistakes only
 - [ ] Congrats every 5 streak
-- [ ] Language selector on menu (English/Ukrainian)
-- [ ] UI changes based on selected language
+- [ ] Language selector on menu
 - [ ] Voice pronounces numbers as words
-- [ ] Voice pronounces result on correct answer
-- [ ] Voice toggle button on game screen (🔊/🔇)
-- [ ] Auto-proceed after 3 sec on wrong answer
-- [ ] Wait for pronunciation to finish before next task
-- [ ] Show install instructions if Ukrainian voice not found
-- [ ] FINISH button exits game and returns to menu
+- [ ] Voice toggle in header (🔊/🔇)
+- [ ] Green CHECK button prominent
+- [ ] "Finish" as subtle text link
 - [ ] Works on tablet/phone
 - [ ] Works offline
 
 ---
 
-*Built with care for curious young minds* 🌟
+## 11. Timing Configuration
+
+| Event | Delay |
+|-------|-------|
+| Correct answer | 500ms |
+| Wrong answer | 1000ms |
+| Auto-submit (anti-cheat) | 2000ms |
+| Congrats popup | 1500ms |
+
+---
+
+*Built with care for curious young minds*
