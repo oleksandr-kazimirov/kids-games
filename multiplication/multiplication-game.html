@@ -535,6 +535,13 @@
                 </div>
             </div>
 
+            <div class="setting-group">
+                <label class="setting-label" style="display:flex;align-items:center;gap:12px;cursor:pointer">
+                    <input type="checkbox" id="checkbox-voice" style="width:24px;height:24px;cursor:pointer">
+                    <span>🔊 Voice (read problems aloud)</span>
+                </label>
+            </div>
+
             <button id="btn-start" class="btn btn-primary">START</button>
             <button id="btn-settings-back" class="btn btn-outline">BACK</button>
         </div>
@@ -661,6 +668,17 @@
             const minutes = Math.floor(totalSeconds / 60);
             const seconds = totalSeconds % 60;
             return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        },
+
+        /** Speak text using Web Speech API (if enabled) */
+        speak(text) {
+            if (State.voiceEnabled && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.9;
+                utterance.pitch = 1.1;
+                window.speechSynthesis.speak(utterance);
+            }
         }
     };
 
@@ -676,6 +694,7 @@
         sessionType: 'fixed',
         totalTasks: 10,
         maxMistakes: 3,
+        voiceEnabled: false,
 
         // Game state
         currentTask: 0,
@@ -822,17 +841,22 @@
         /** Display the current problem */
         displayProblem() {
             const p = State.currentProblem;
-            let html;
+            let html, speech;
 
             if (State.gameMode === 'result') {
                 html = `${p.a} × ${p.b} = <span class="unknown">?</span>`;
+                speech = `${p.a} times ${p.b}`;
             } else {
                 const aDisplay = p.hidden === 'a' ? '<span class="unknown">?</span>' : p.a;
                 const bDisplay = p.hidden === 'b' ? '<span class="unknown">?</span>' : p.b;
                 html = `${aDisplay} × ${bDisplay} = ${p.result}`;
+                speech = p.hidden === 'a'
+                    ? `What times ${p.b} equals ${p.result}`
+                    : `${p.a} times what equals ${p.result}`;
             }
 
             Utils.$('display-problem').innerHTML = html;
+            Utils.speak(speech);
         },
 
         /** Update progress display */
@@ -1018,6 +1042,7 @@
             State.sessionType = Utils.$('select-session-type').value;
             State.totalTasks = parseInt(Utils.$('select-total-tasks').value);
             State.maxMistakes = parseInt(Utils.$('select-max-mistakes').value);
+            State.voiceEnabled = Utils.$('checkbox-voice').checked;
 
             // Reset state
             State.reset();
@@ -1073,6 +1098,7 @@
                 State.masteredPairs.add(State.currentProblem.key);
                 // Show checkmark for correct answer
                 answerEl.innerHTML = `${State.currentAnswer} <span style="color:var(--success);font-size:48px;margin-left:12px">✓</span>`;
+                Utils.speak('Correct!');
                 if (State.streak > 0 && State.streak % 5 === 0) {
                     setTimeout(() => UI.showCongrats(), 300);
                 }
@@ -1082,6 +1108,7 @@
 
                 // Show correct answer (big and green)
                 answerEl.innerHTML = `<span style="text-decoration:line-through;color:var(--gray-400)">${State.currentAnswer}</span> <span style="color:var(--gray-400);font-size:24px">→</span> <span style="color:var(--success);font-size:56px;font-weight:800">${State.currentProblem.answer}</span>`;
+                Utils.speak(`The answer is ${State.currentProblem.answer}`);
 
                 // Re-queue problem to repeat later (all modes)
                 const retryProblem = ProblemGenerator.createProblem(
