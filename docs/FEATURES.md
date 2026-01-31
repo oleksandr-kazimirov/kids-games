@@ -177,33 +177,55 @@ Scenario C: Language persists through screens
 
 ---
 
-## Feature: Voice (Always Enabled)
+## Feature: Voice
 
 ```gherkin
-Scenario A: Voice in English
+Scenario A: Voice enabled by default
+  Given game starts
+  Then voice is enabled
+    And voice toggle shows 🔊
+
+Scenario B: Toggle voice off
+  Given game is in progress
+    And voice is enabled
+  When user clicks voice toggle button
+  Then voice is disabled
+    And voice toggle shows 🔇
+    And speech is cancelled
+
+Scenario C: Voice in English
   Given language is "English"
+    And voice is enabled
   When problem "7 x 8 = ?" is displayed
-  Then voice says "seven times eight"
+  Then voice says "seven, times eight"
   When user answers correct (56)
   Then voice says "fifty-six, correct!"
+    And waits for speech to finish
+    And then proceeds to next problem
   When user answers incorrect
   Then voice says "The answer is fifty-six"
+    And waits for speech to finish
+    And auto-proceeds after 3 seconds
 
-Scenario B: Voice in Ukrainian
+Scenario D: Voice in Ukrainian
   Given language is "Ukrainian"
+    And voice is enabled
+    And device has Ukrainian TTS installed
   When problem "7 x 8 = ?" is displayed
   Then voice says "sim na visim"
   When user answers correct (56)
   Then voice says "piatdesiat shist, pravylno!"
-  When user answers incorrect
-  Then voice says "Vidpovid: piatdesiat shist"
 
-Scenario C: Voice works offline
-  Given device is offline
-  When problem is displayed
-  Then uses Web Speech API
-    And uses device built-in TTS
-    And voice works
+Scenario E: Ukrainian voice not available
+  Given language is "Ukrainian"
+    And device has no Ukrainian TTS
+  Then popup shows "Ukrainian Voice Not Found"
+    And shows installation instructions for:
+      | Platform | Instructions |
+      | Android  | Settings → System → Languages → TTS |
+      | iOS      | Settings → Accessibility → Voices |
+      | Windows  | Settings → Time & Language → Speech |
+    And user can close popup with OK button
 ```
 
 ---

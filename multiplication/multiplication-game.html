@@ -732,8 +732,9 @@
 
     const CONFIG = {
         TIMING: {
-            CORRECT_DELAY: 1700,
-            WRONG_DELAY: 2700,
+            CORRECT_DELAY: 500,
+            WRONG_DELAY: 1000,
+            AUTO_SUBMIT_DELAY: 2000,
             CONGRATS_DURATION: 1500,
             TIMER_INTERVAL: 1000
         },
@@ -1074,6 +1075,7 @@
         currentAnswer: '',
         currentProblem: null,
         isProcessing: false,
+        autoSubmitTimer: null,
 
         // Collections
         usedPairs: new Set(),
@@ -1094,6 +1096,10 @@
             this.currentAnswer = '';
             this.currentProblem = null;
             this.isProcessing = false;
+            if (this.autoSubmitTimer) {
+                clearTimeout(this.autoSubmitTimer);
+                this.autoSubmitTimer = null;
+            }
             this.usedPairs.clear();
             this.problemQueue = [];
             this.masteredPairs.clear();
@@ -1530,6 +1536,12 @@
             if (!State.currentAnswer || State.isProcessing) return;
             State.isProcessing = true;
 
+            // Clear auto-submit timer
+            if (State.autoSubmitTimer) {
+                clearTimeout(State.autoSubmitTimer);
+                State.autoSubmitTimer = null;
+            }
+
             const userAnswer = parseInt(State.currentAnswer);
             const isCorrect = userAnswer === State.currentProblem.answer;
 
@@ -1598,6 +1610,14 @@
 
         /** Handle numpad input */
         handleNumpadInput(value) {
+            if (State.isProcessing) return;
+
+            // Clear any pending auto-submit timer
+            if (State.autoSubmitTimer) {
+                clearTimeout(State.autoSubmitTimer);
+                State.autoSubmitTimer = null;
+            }
+
             if (value === 'clear') {
                 State.currentAnswer = '';
             } else if (State.currentAnswer.length < 3) {
@@ -1607,24 +1627,45 @@
             Utils.$('display-answer').textContent = State.currentAnswer;
             Utils.$('display-answer').className = 'answer-display';
 
-            // Auto-submit on correct answer
+            // Auto-submit on correct answer (immediate)
             if (State.currentAnswer && parseInt(State.currentAnswer) === State.currentProblem.answer) {
                 this.checkAnswer();
+            } else if (State.currentAnswer) {
+                // Auto-submit after delay for wrong answers (anti-cheat)
+                State.autoSubmitTimer = setTimeout(() => {
+                    if (State.currentAnswer && !State.isProcessing) {
+                        this.checkAnswer();
+                    }
+                }, CONFIG.TIMING.AUTO_SUBMIT_DELAY);
             }
         },
 
         /** Handle keyboard input */
         handleKeyboardInput(event) {
             if (!Utils.$('game-screen').classList.contains('active')) return;
+            if (State.isProcessing) return;
+
+            // Clear any pending auto-submit timer
+            if (State.autoSubmitTimer) {
+                clearTimeout(State.autoSubmitTimer);
+                State.autoSubmitTimer = null;
+            }
 
             if (event.key >= '0' && event.key <= '9' && State.currentAnswer.length < 3) {
                 State.currentAnswer += event.key;
                 Utils.$('display-answer').textContent = State.currentAnswer;
                 Utils.$('display-answer').className = 'answer-display';
 
-                // Auto-submit on correct answer
+                // Auto-submit on correct answer (immediate)
                 if (parseInt(State.currentAnswer) === State.currentProblem.answer) {
                     this.checkAnswer();
+                } else if (State.currentAnswer) {
+                    // Auto-submit after delay for wrong answers (anti-cheat)
+                    State.autoSubmitTimer = setTimeout(() => {
+                        if (State.currentAnswer && !State.isProcessing) {
+                            this.checkAnswer();
+                        }
+                    }, CONFIG.TIMING.AUTO_SUBMIT_DELAY);
                 }
             } else if (event.key === 'Backspace') {
                 State.currentAnswer = State.currentAnswer.slice(0, -1);

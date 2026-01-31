@@ -178,6 +178,10 @@ kids-games/
 - [ ] UI changes based on selected language
 - [ ] Voice pronounces numbers as words
 - [ ] Voice pronounces result on correct answer
+- [ ] Voice toggle button on game screen (🔊/🔇)
+- [ ] Auto-proceed after 3 sec on wrong answer
+- [ ] Wait for pronunciation to finish before next task
+- [ ] Show install instructions if Ukrainian voice not found
 - [ ] FINISH button exits game and returns to menu
 - [ ] Works on tablet/phone
 - [ ] Works offline
