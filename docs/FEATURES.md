@@ -212,6 +212,40 @@ Scenario D: Ukrainian voice not available
 
 ---
 
+## Feature: Voice Input (Speech Recognition)
+
+```gherkin
+Scenario A: Speak answer instead of typing
+  Given game screen is displayed
+    And speech recognition is supported
+  When user clicks microphone button 🎤
+  Then microphone button shows "listening" state (red pulsing)
+    And device starts listening for speech
+  When user says "fifty-six"
+  Then speech is converted to "56"
+    And answer is auto-submitted
+
+Scenario B: Voice input in Ukrainian
+  Given language is "Ukrainian"
+  When user clicks microphone button
+    And user says "п'ятдесят шість"
+  Then speech is converted to "56"
+    And answer is submitted
+
+Scenario C: Speech recognition not supported
+  Given device does not support speech recognition
+  Then microphone button is disabled (grayed out)
+    And user must use numpad
+
+Scenario D: Voice input with numerals
+  Given user clicks microphone button
+  When user says "56" (as numerals)
+  Then answer is recognized as 56
+    And answer is submitted
+```
+
+---
+
 ## Feature: Button Design (UX Standards)
 
 ```gherkin
@@ -353,6 +387,7 @@ Scenario A: View multiplication table
 | Auto-submit correct (immediate) | [ ] |
 | Auto-submit wrong (2 sec) | [ ] |
 | Voice toggle in header | [ ] |
+| Voice input (microphone) | [ ] |
 | Green primary buttons | [ ] |
 | Text link navigation | [ ] |
 | Language switching | [ ] |

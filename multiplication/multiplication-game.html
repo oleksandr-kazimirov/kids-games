@@ -296,6 +296,21 @@
         .num-btn:active { background: var(--gray-300); transform: scale(.95); }
         .num-btn.clear { background: #FFEBEE; color: var(--error); }
         .num-btn.zero { grid-column: span 2; }
+        .input-row { display: flex; gap: 12px; }
+        .mic-btn {
+            width: 64px;
+            height: 56px;
+            font-size: 28px;
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-lg);
+            background: #fff;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .mic-btn:active { transform: scale(.95); }
+        .mic-btn.listening { background: #FFEBEE; border-color: var(--error); animation: pulse 1s infinite; }
+        .mic-btn.disabled { opacity: 0.3; pointer-events: none; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
         /* Results */
         .score-summary {
@@ -706,7 +721,10 @@
             <div id="display-problem" class="problem"></div>
             <div id="display-answer" class="answer-display"></div>
             <div class="numpad" id="numpad"></div>
-            <button id="btn-check" class="btn btn-success">CHECK</button>
+            <div class="input-row">
+                <button id="btn-mic" class="mic-btn">🎤</button>
+                <button id="btn-check" class="btn btn-success" style="flex:1">CHECK</button>
+            </div>
         </div>
 
         <!-- Results Screen -->
@@ -846,6 +864,76 @@
             if (n < 20) return w.ones[n];
             if (n < 100) { const t = Math.floor(n / 10), o = n % 10; return w.tens[t] + (o > 0 ? w.sep + w.ones[o] : ''); }
             return w.hundred;
+        }
+
+        static parse(text, lang) {
+            const t = text.toLowerCase().trim();
+            const w = this.WORDS[lang] || this.WORDS.en;
+            // Direct number
+            if (/^\d+$/.test(t)) return parseInt(t, 10);
+            // Single word (0-19)
+            const onesIdx = w.ones.findIndex(word => t === word || t.includes(word));
+            if (onesIdx >= 0 && onesIdx < 20) return onesIdx;
+            // Tens (20-99)
+            for (let i = 2; i < 10; i++) {
+                if (t.includes(w.tens[i])) {
+                    const remainder = t.replace(w.tens[i], '').replace(w.sep, '').trim();
+                    const ones = remainder ? w.ones.indexOf(remainder) : 0;
+                    return i * 10 + (ones > 0 ? ones : 0);
+                }
+            }
+            // Hundred
+            if (t.includes(w.hundred.split(' ').pop())) return 100;
+            return null;
+        }
+    }
+
+    // =========================================================================
+    // SPEECH RECOGNITION SERVICE CLASS
+    // =========================================================================
+
+    class SpeechRecognitionService {
+        constructor(state, onResult) {
+            this.state = state;
+            this.onResult = onResult;
+            this.recognition = null;
+            this.isListening = false;
+            this.supported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+            if (this.supported) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                this.recognition = new SpeechRecognition();
+                this.recognition.continuous = false;
+                this.recognition.interimResults = false;
+                this.recognition.maxAlternatives = 3;
+                this.recognition.onresult = e => this.handleResult(e);
+                this.recognition.onend = () => this.stop();
+                this.recognition.onerror = () => this.stop();
+            }
+        }
+
+        start() {
+            if (!this.supported || this.isListening) return false;
+            this.recognition.lang = this.state.voiceLanguage === 'uk' ? 'uk-UA' : 'en-US';
+            this.isListening = true;
+            this.recognition.start();
+            return true;
+        }
+
+        stop() {
+            this.isListening = false;
+            Utility.$('btn-mic')?.classList.remove('listening');
+        }
+
+        handleResult(event) {
+            for (const result of event.results) {
+                for (const alt of result) {
+                    const num = NumberWords.parse(alt.transcript, this.state.voiceLanguage);
+                    if (num !== null && num >= 0 && num <= 100) {
+                        this.onResult(String(num));
+                        return;
+                    }
+                }
+            }
         }
     }
 
@@ -1229,6 +1317,23 @@
             Utility.$('btn-voice-toggle').classList.toggle('off', !this.state.voiceEnabled);
             if (!this.state.voiceEnabled) this.speech.cancel();
         }
+
+        handleVoiceResult(value) {
+            if (this.state.isProcessing) return;
+            this.state.currentAnswer = value;
+            Utility.$('display-answer').textContent = value;
+            Utility.$('display-answer').className = 'answer-display';
+            this.checkAnswer();
+        }
+
+        startListening() {
+            if (this.state.isProcessing || !this.recognizer?.supported) return;
+            this.speech.cancel();
+            Utility.$('btn-mic').classList.add('listening');
+            this.recognizer.start();
+        }
+
+        setRecognizer(recognizer) { this.recognizer = recognizer; }
     }
 
     // =========================================================================
@@ -1241,6 +1346,8 @@
             this.speech = new SpeechService(this.state);
             this.ui = new UIController(this.state, this.speech);
             this.game = new GameController(this.state, this.ui, this.speech);
+            this.recognizer = new SpeechRecognitionService(this.state, v => this.game.handleVoiceResult(v));
+            this.game.setRecognizer(this.recognizer);
         }
 
         init() {
@@ -1261,6 +1368,8 @@
             on('btn-check', () => this.game.checkAnswer());
             on('btn-back-game', () => this.game.finish());
             on('btn-voice-toggle', () => this.game.toggleVoice());
+            on('btn-mic', () => this.game.startListening());
+            if (!this.recognizer.supported) Utility.$('btn-mic').classList.add('disabled');
             on('btn-settings-back', () => this.ui.showScreen('menu'));
             on('btn-learn-back', () => this.ui.showScreen('menu'));
             on('btn-results-back', () => { Utility.$('display-score-summary').classList.remove('success'); this.ui.showScreen('menu'); });

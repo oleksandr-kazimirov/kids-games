@@ -9,6 +9,7 @@ Kids educational games - single HTML files, no dependencies, offline-capable.
 - Single HTML file with embedded CSS/JS
 - Bilingual: English and Ukrainian
 - Voice pronunciation using Web Speech API
+- Voice input: kids can speak answers using Speech Recognition API
 
 ## IMPORTANT: Keep Files in Sync
 When making ANY changes, ALWAYS update these files together:
@@ -25,14 +26,15 @@ When making ANY changes, ALWAYS update these files together:
 ## Architecture
 OOP with ES6 classes:
 - `Utility` - static helpers
-- `SpeechService` - voice handling
-- `NumberWords` - number-to-word conversion
+- `SpeechService` - voice output (text-to-speech)
+- `SpeechRecognitionService` - voice input (speech-to-text)
+- `NumberWords` - number-to-word and word-to-number conversion
 - `Problem` - problem data and display
 - `SessionStrategy` pattern - `FixedSession`, `PracticeAllSession`, `PracticeOneSession`
 - `SessionFactory` - creates session by type
 - `GameState` - centralized state
 - `UIController` - DOM operations
-- `GameController` - game logic
+- `GameController` - game logic + voice input
 - `Application` - main entry
 
 ## Key Files

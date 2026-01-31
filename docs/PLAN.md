@@ -14,6 +14,7 @@ A tablet-optimized multiplication learning game for children (ages 7-9) built as
 - Touch-friendly for tablets
 - Responsive for all screen sizes
 - Voice reads problems aloud (English or Ukrainian)
+- Voice input: kids can speak their answers
 
 ---
 
@@ -73,7 +74,8 @@ MENU ──► SETTINGS ──► GAME ──► RESULTS
 
 ```
 ┌─────────────────────────────────────┐
-│ Mastered: 5/40  00:45  Left: 35  🔊 │  <- voice toggle in header
+│   ←        00:45        🔊          │  <- back, timer, voice toggle
+│   Mastered: 5/40      Left: 35      │  <- progress info
 ├─────────────────────────────────────┤
 │           7  ×  8  =  ?             │
 ├─────────────────────────────────────┤
@@ -84,10 +86,9 @@ MENU ──► SETTINGS ──► GAME ──► RESULTS
 │       [ 7 ]  [ 8 ]  [ 9 ]          │
 │         [   0   ]   [ C ]          │
 ├─────────────────────────────────────┤
-│    ┌─────────────────────┐         │
-│    │       CHECK         │  GREEN   │
-│    └─────────────────────┘         │
-│            Finish          subtle   │
+│  🎤  ┌─────────────────────┐       │  <- mic for voice input
+│      │       CHECK         │ GREEN  │
+│      └─────────────────────┘       │
 └─────────────────────────────────────┘
 ```
 
@@ -151,19 +152,20 @@ Child enters digits
 
 ```javascript
 // Classes
-Utility          // Static helpers ($, randomInt, shuffle, formatTime)
-SpeechService    // Voice handling (speak, hasVoice, cancel)
-NumberWords      // Number-to-word conversion
-Problem          // Problem data, display HTML, speech text
-SessionStrategy  // Base class for session types
+Utility                   // Static helpers ($, randomInt, shuffle, formatTime)
+SpeechService             // Voice output (speak, hasVoice, cancel)
+SpeechRecognitionService  // Voice input (start, stop, handleResult)
+NumberWords               // Number-to-word conversion + word-to-number parsing
+Problem                   // Problem data, display HTML, speech text
+SessionStrategy           // Base class for session types
   ├─ FixedSession
   ├─ PracticeAllSession
   └─ PracticeOneSession
-SessionFactory   // Creates session by type
-GameState        // Centralized state management
-UIController     // All DOM operations
-GameController   // Game logic
-Application      // Main entry point
+SessionFactory            // Creates session by type
+GameState                 // Centralized state management
+UIController              // All DOM operations
+GameController            // Game logic + voice input handling
+Application               // Main entry point
 ```
 
 ---
@@ -199,6 +201,7 @@ kids-games/
 - [ ] Language selector on menu
 - [ ] Voice pronounces numbers as words
 - [ ] Voice toggle in header (🔊/🔇)
+- [ ] Voice input with microphone button
 - [ ] Green CHECK button prominent
 - [ ] "Finish" as subtle text link
 - [ ] Works on tablet/phone
