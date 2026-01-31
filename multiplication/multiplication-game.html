@@ -296,7 +296,7 @@
         .num-btn:active { background: var(--gray-300); transform: scale(.95); }
         .num-btn.clear { background: #FFEBEE; color: var(--error); }
         .num-btn.zero { grid-column: span 2; }
-        .input-row { display: flex; gap: 12px; }
+        .input-row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
         .mic-btn {
             padding: 20px;
             font-size: 28px;
@@ -723,7 +723,7 @@
             <div id="display-answer" class="answer-display"></div>
             <div class="numpad" id="numpad"></div>
             <div class="input-row">
-                <button id="btn-check" class="btn btn-success" style="flex:1">CHECK</button>
+                <button id="btn-check" class="btn btn-success">CHECK</button>
                 <button id="btn-mic" class="mic-btn">🎤</button>
             </div>
         </div>
