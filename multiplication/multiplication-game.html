@@ -1,7 +1,6 @@
 <!--
     Multiplication Game for Kids
     Powered by Claude AI (Anthropic) and Oleksandr Kazimirov
-    https://claude.ai
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -373,6 +372,30 @@
             box-shadow: var(--shadow-btn);
         }
 
+        /* Language Selector */
+        .language-selector { display: flex; gap: 12px; justify-content: center; }
+
+        .lang-btn {
+            padding: 12px 20px;
+            font-size: 18px;
+            font-weight: 600;
+            border: 3px solid var(--gray-300);
+            border-radius: var(--radius-lg);
+            background: #fff;
+            color: var(--gray-800);
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .lang-btn:active { transform: scale(.95); }
+
+        .lang-btn.selected {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border-color: var(--primary-dark);
+            box-shadow: var(--shadow-btn);
+        }
+
         /* Learn Screen */
         .multiplication-table {
             background: linear-gradient(135deg, #FFF8E1, #FFECB3);
@@ -464,7 +487,13 @@
     <div class="container">
         <!-- Menu Screen -->
         <div id="menu-screen" class="screen active">
-            <h1>Multiplication Game</h1>
+            <h1 id="menu-title">Multiplication Game</h1>
+            <div class="setting-group" style="margin-bottom:24px">
+                <div class="language-selector">
+                    <button class="lang-btn selected" data-lang="en">🇬🇧 English</button>
+                    <button class="lang-btn" data-lang="uk">🇺🇦 Українська</button>
+                </div>
+            </div>
             <button id="btn-play" class="btn btn-primary">PLAY</button>
             <button id="btn-learn" class="btn btn-secondary">LEARN</button>
         </div>
@@ -532,23 +561,6 @@
                             </select>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="setting-group">
-                <label class="setting-label" style="display:flex;align-items:center;gap:12px;cursor:pointer">
-                    <input type="checkbox" id="checkbox-voice" style="width:24px;height:24px;cursor:pointer">
-                    <span>🔊 Voice (read problems aloud)</span>
-                </label>
-            </div>
-
-            <div id="voice-language-settings" class="setting-group" style="display:none">
-                <label class="setting-label">Voice Language:</label>
-                <div class="select-wrapper">
-                    <select id="select-voice-language">
-                        <option value="en">🇬🇧 English</option>
-                        <option value="uk">🇺🇦 Українська</option>
-                    </select>
                 </div>
             </div>
 
@@ -642,6 +654,85 @@
             ['🎯', 'Brilliant!'],
             ['✨', 'Outstanding!']
         ]
+    };
+
+    // =========================================================================
+    // TRANSLATIONS
+    // =========================================================================
+
+    const TRANSLATIONS = {
+        en: {
+            menuTitle: 'Multiplication Game',
+            play: 'PLAY',
+            learn: 'LEARN',
+            settings: 'Game Settings',
+            practiceUpTo: 'Practice numbers up to:',
+            questionType: 'Question Type:',
+            findResult: 'Find the Result (A × B = ?)',
+            findMultiplier: 'Find the Multiplier (? × B = Z)',
+            sessionType: 'Session Type:',
+            fixedTasks: 'Fixed Tasks',
+            practiceAll: 'Practice All Tables',
+            practiceOne: 'Practice One Table',
+            selectTable: 'Select table to practice:',
+            tasks: 'Tasks:',
+            maxMistakes: 'Max Mistakes:',
+            unlimited: 'Unlimited',
+            start: 'START',
+            back: 'BACK',
+            backToMenu: 'BACK TO MENU',
+            check: 'CHECK',
+            finish: 'FINISH',
+            learnTables: 'Learn Tables',
+            learnHint: 'Select a number to see its multiplication table:',
+            tableOf: 'Table of',
+            results: 'Results',
+            playAgain: 'PLAY AGAIN',
+            mastered: 'Mastered:',
+            mistakes: 'Mistakes:',
+            left: 'Left:',
+            practiceAllInfo: 'Practice All: Tables 2-{max} ({total} tasks)',
+            perfectMessage: 'Perfect! No mistakes!',
+            completedMessage: 'Completed with {count} mistake(s) corrected!',
+            noMistakes: 'No mistakes! Perfect!',
+            masteredIn: '{label} mastered in'
+        },
+        uk: {
+            menuTitle: 'Гра на Множення',
+            play: 'ГРАТИ',
+            learn: 'ВЧИТИ',
+            settings: 'Налаштування',
+            practiceUpTo: 'Числа до:',
+            questionType: 'Тип питання:',
+            findResult: 'Знайти результат (A × B = ?)',
+            findMultiplier: 'Знайти множник (? × B = Z)',
+            sessionType: 'Тип сесії:',
+            fixedTasks: 'Фіксовані завдання',
+            practiceAll: 'Всі таблиці',
+            practiceOne: 'Одна таблиця',
+            selectTable: 'Оберіть таблицю:',
+            tasks: 'Завдань:',
+            maxMistakes: 'Макс. помилок:',
+            unlimited: 'Без ліміту',
+            start: 'СТАРТ',
+            back: 'НАЗАД',
+            backToMenu: 'ДО МЕНЮ',
+            check: 'ПЕРЕВІРИТИ',
+            finish: 'ЗАВЕРШИТИ',
+            learnTables: 'Вивчення таблиць',
+            learnHint: 'Оберіть число щоб побачити таблицю множення:',
+            tableOf: 'Таблиця на',
+            results: 'Результати',
+            playAgain: 'ГРАТИ ЗНОВУ',
+            mastered: 'Вивчено:',
+            mistakes: 'Помилок:',
+            left: 'Лишилось:',
+            practiceAllInfo: 'Всі таблиці: 2-{max} ({total} завдань)',
+            perfectMessage: 'Чудово! Без помилок!',
+            completedMessage: 'Завершено з {count} виправленими помилками!',
+            noMistakes: 'Без помилок! Чудово!',
+            masteredIn: '{label} вивчено за'
+        }
     };
 
     // =========================================================================
@@ -794,8 +885,9 @@
         sessionType: 'fixed',
         totalTasks: 10,
         maxMistakes: 3,
-        voiceEnabled: false,
+        voiceEnabled: true,
         voiceLanguage: 'en',
+        uiLanguage: 'en',
 
         // Game state
         currentTask: 0,
@@ -939,6 +1031,75 @@
             Utils.$(`${name}-screen`).classList.add('active');
         },
 
+        /** Get translation */
+        t(key) {
+            return TRANSLATIONS[State.uiLanguage][key] || key;
+        },
+
+        /** Update UI language */
+        updateLanguage(lang) {
+            State.uiLanguage = lang;
+            State.voiceLanguage = lang;
+            const t = TRANSLATIONS[lang];
+
+            // Menu
+            Utils.$('menu-title').textContent = t.menuTitle;
+            Utils.$('btn-play').textContent = t.play;
+            Utils.$('btn-learn').textContent = t.learn;
+
+            // Settings
+            document.querySelector('#settings-screen h2').textContent = t.settings;
+            document.querySelectorAll('.setting-label')[0].textContent = t.practiceUpTo;
+            document.querySelectorAll('.setting-label')[1].textContent = t.questionType;
+            document.querySelectorAll('.setting-label')[2].textContent = t.sessionType;
+
+            const gameModeSelect = Utils.$('select-game-mode');
+            gameModeSelect.options[0].textContent = t.findResult;
+            gameModeSelect.options[1].textContent = t.findMultiplier;
+
+            const sessionSelect = Utils.$('select-session-type');
+            sessionSelect.options[0].textContent = t.fixedTasks;
+            sessionSelect.options[1].textContent = t.practiceAll;
+            sessionSelect.options[2].textContent = t.practiceOne;
+
+            // Practice one label
+            const practiceOneLabel = document.querySelector('#practice-one-settings .setting-label');
+            if (practiceOneLabel) practiceOneLabel.textContent = t.selectTable;
+
+            // Fixed mode labels
+            const fixedLabels = document.querySelectorAll('#fixed-mode-settings .setting-label');
+            if (fixedLabels[0]) fixedLabels[0].textContent = t.tasks;
+            if (fixedLabels[1]) fixedLabels[1].textContent = t.maxMistakes;
+
+            const mistakesSelect = Utils.$('select-max-mistakes');
+            mistakesSelect.options[3].textContent = t.unlimited;
+
+            Utils.$('btn-start').textContent = t.start;
+            Utils.$('btn-settings-back').textContent = t.back;
+
+            // Learn
+            document.querySelector('#learn-screen h2').textContent = t.learnTables;
+            document.querySelector('.learn-hint').textContent = t.learnHint;
+            Utils.$('btn-learn-back').textContent = t.backToMenu;
+
+            // Game
+            Utils.$('btn-check').textContent = t.check;
+            Utils.$('btn-finish').textContent = t.finish;
+
+            // Results
+            document.querySelector('#results-screen h2').textContent = t.results;
+            Utils.$('btn-play-again').textContent = t.playAgain;
+            Utils.$('btn-results-back').textContent = t.backToMenu;
+
+            // Update combo count
+            this.updateComboCount();
+
+            // Update language buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.lang === lang);
+            });
+        },
+
         /** Display the current problem */
         displayProblem() {
             const p = State.currentProblem;
@@ -969,10 +1130,10 @@
                 total = State.totalTasks;
             }
 
-            Utils.$('display-progress').textContent = `Mastered: ${State.masteredPairs.size} / ${total}`;
+            Utils.$('display-progress').textContent = `${this.t('mastered')} ${State.masteredPairs.size} / ${total}`;
             mistakesEl.textContent = State.mistakes > 0
-                ? `Mistakes: ${State.mistakes} | Left: ${State.problemQueue.length}`
-                : `Left: ${State.problemQueue.length}`;
+                ? `${this.t('mistakes')} ${State.mistakes} | ${this.t('left')} ${State.problemQueue.length}`
+                : `${this.t('left')} ${State.problemQueue.length}`;
             mistakesEl.className = State.mistakes > 0 ? 'mistakes' : 'remaining';
         },
 
@@ -986,7 +1147,8 @@
         updateComboCount() {
             const max = parseInt(Utils.$('input-max-number').value);
             const total = ProblemGenerator.calculateTotalCombinations(max);
-            Utils.$('display-combo-count').textContent = `Practice All: Tables 2-${max} (${total} tasks)`;
+            const template = this.t('practiceAllInfo');
+            Utils.$('display-combo-count').textContent = template.replace('{max}', max).replace('{total}', total);
         },
 
         /** Show multiplication table for learning */
@@ -996,7 +1158,7 @@
                 btn.classList.toggle('selected', parseInt(btn.dataset.num) === number);
             });
 
-            Utils.$('table-title').textContent = `Table of ${number}`;
+            Utils.$('table-title').textContent = `${this.t('tableOf')} ${number}`;
 
             let html = '';
             for (let i = 1; i <= 10; i++) {
@@ -1040,24 +1202,25 @@
             let taskCount, label;
             if (State.sessionType === 'practice-one') {
                 taskCount = 10;
-                label = `Table of ${State.practiceNumber}`;
+                label = `${this.t('tableOf')} ${State.practiceNumber}`;
             } else if (State.sessionType === 'practice-all') {
                 taskCount = ProblemGenerator.calculateTotalCombinations(State.maxNumber);
-                label = 'All tables';
+                label = this.t('practiceAll');
             } else {
                 taskCount = State.totalTasks;
-                label = `${taskCount} problems`;
+                label = `${taskCount}`;
             }
 
             Utils.$('display-score').textContent = `${taskCount} / ${taskCount}`;
-            Utils.$('display-percent').innerHTML = `${label} mastered in <strong>${timeStr}</strong>`;
+            const masteredTemplate = this.t('masteredIn');
+            Utils.$('display-percent').innerHTML = `${masteredTemplate.replace('{label}', label)} <strong>${timeStr}</strong>`;
             summaryEl.classList.add('success');
 
             const mistakeCount = State.mistakes;
             if (mistakeCount > 0) {
-                gameOverEl.textContent = `Completed with ${mistakeCount} mistake${mistakeCount > 1 ? 's' : ''} corrected!`;
+                gameOverEl.textContent = this.t('completedMessage').replace('{count}', mistakeCount);
             } else {
-                gameOverEl.textContent = `Perfect! No mistakes!`;
+                gameOverEl.textContent = this.t('perfectMessage');
             }
             gameOverEl.className = 'game-over-message success';
             gameOverEl.style.display = 'block';
@@ -1078,7 +1241,7 @@
 
             let html = '';
             if (mistakes.length === 0) {
-                html = '<div class="result-item correct" style="justify-content:center;color:var(--success-dark);font-weight:600">No mistakes! Perfect!</div>';
+                html = `<div class="result-item correct" style="justify-content:center;color:var(--success-dark);font-weight:600">${this.t('noMistakes')}</div>`;
             } else {
                 mistakes.forEach(h => {
                     const p = h.problem;
@@ -1139,8 +1302,7 @@
             State.sessionType = Utils.$('select-session-type').value;
             State.totalTasks = parseInt(Utils.$('select-total-tasks').value);
             State.maxMistakes = parseInt(Utils.$('select-max-mistakes').value);
-            State.voiceEnabled = Utils.$('checkbox-voice').checked;
-            State.voiceLanguage = Utils.$('select-voice-language').value;
+            // Voice is always enabled, language is set from menu
 
             // Reset state
             State.reset();
@@ -1327,8 +1489,9 @@
             Utils.$('practice-one-settings').style.display = value === 'practice-one' ? 'block' : 'none';
         });
 
-        Utils.$('checkbox-voice').addEventListener('change', e => {
-            Utils.$('voice-language-settings').style.display = e.target.checked ? 'block' : 'none';
+        // Language selector
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => UI.updateLanguage(btn.dataset.lang));
         });
 
         // Navigation buttons

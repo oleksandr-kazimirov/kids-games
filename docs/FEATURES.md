@@ -148,17 +148,40 @@ Scenario B: Wrong answer requires CHECK button
 
 ---
 
-## Feature: Voice (Optional)
+## Feature: Language Selection
 
 ```gherkin
-Scenario A: Voice disabled by default
-  Given voice is disabled
-  When problem is displayed
-  Then speech does not occur
+Scenario A: Select language on menu
+  Given user is on menu screen
+  When user clicks "English" button
+  Then UI language is English
+    And voice language is English
+    And English button is highlighted
 
-Scenario B: Voice enabled with English
-  Given voice is enabled
-    And language is "English"
+Scenario B: Switch to Ukrainian
+  Given user is on menu screen
+  When user clicks "Українська" button
+  Then UI language is Ukrainian
+    And all buttons show Ukrainian text
+    And voice pronounces in Ukrainian
+
+Scenario C: Language persists through screens
+  Given user selected Ukrainian
+  When user navigates to Settings
+  Then all labels are in Ukrainian
+  When user starts game
+  Then progress text is in Ukrainian
+  When user finishes game
+  Then results are in Ukrainian
+```
+
+---
+
+## Feature: Voice (Always Enabled)
+
+```gherkin
+Scenario A: Voice in English
+  Given language is "English"
   When problem "7 x 8 = ?" is displayed
   Then voice says "seven times eight"
   When user answers correct (56)
@@ -166,9 +189,8 @@ Scenario B: Voice enabled with English
   When user answers incorrect
   Then voice says "The answer is fifty-six"
 
-Scenario C: Voice enabled with Ukrainian
-  Given voice is enabled
-    And language is "Ukrainian"
+Scenario B: Voice in Ukrainian
+  Given language is "Ukrainian"
   When problem "7 x 8 = ?" is displayed
   Then voice says "sim na visim"
   When user answers correct (56)
@@ -176,9 +198,8 @@ Scenario C: Voice enabled with Ukrainian
   When user answers incorrect
   Then voice says "Vidpovid: piatdesiat shist"
 
-Scenario D: Voice works offline
-  Given voice is enabled
-    And device is offline
+Scenario C: Voice works offline
+  Given device is offline
   When problem is displayed
   Then uses Web Speech API
     And uses device built-in TTS
@@ -313,11 +334,11 @@ Scenario A: View multiplication table
 
 ## Test Matrix
 
-| Mode | Tasks | Retry | Auto-Submit | Voice | Timer | Congrats |
-|------|-------|-------|-------------|-------|-------|----------|
-| Fixed | User-defined | Yes | Yes | EN/UK | Yes | Yes |
-| Practice All | (max-1) x 10 | Yes | Yes | EN/UK | Yes | Yes |
-| Practice One | 10 | Yes | Yes | EN/UK | Yes | Yes |
+| Mode | Tasks | Retry | Auto-Submit | Voice | Timer | Congrats | Language |
+|------|-------|-------|-------------|-------|-------|----------|----------|
+| Fixed | User-defined | Yes | Yes | Always | Yes | Yes | EN/UK |
+| Practice All | (max-1) x 10 | Yes | Yes | Always | Yes | Yes | EN/UK |
+| Practice One | 10 | Yes | Yes | Always | Yes | Yes | EN/UK |
 
 ---
 

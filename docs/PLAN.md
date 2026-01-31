@@ -42,13 +42,14 @@ A tablet-optimized multiplication learning game for children (ages 7-9) built as
 
 | Setting | Options | Default |
 |---------|---------|---------|
+| Language | English / Ukrainian | English |
 | Max Number | 2-10 | 10 |
 | Question Type | Result / Multiplier | Result |
 | Session Type | Fixed / Practice All / Practice One | Fixed |
 | Tasks (Fixed only) | 5, 10, 15, 20 | 10 |
 | Max Mistakes (Fixed only) | 1, 2, 3, Unlimited | 3 |
-| Voice | On / Off | Off |
-| Voice Language | English / Ukrainian | English |
+
+**Note:** Language is selected on the menu screen. Voice is always enabled and uses the selected language.
 
 ---
 
@@ -173,10 +174,10 @@ kids-games/
 - [ ] Timer works in all modes
 - [ ] Results show mistakes only
 - [ ] Congrats every 5 streak
-- [ ] Voice pronounces numbers as words (English)
-- [ ] Voice pronounces result on correct answer (e.g., "fifty-six, correct!")
-- [ ] Voice pronounces numbers as words (Ukrainian)
-- [ ] Voice language selection works
+- [ ] Language selector on menu (English/Ukrainian)
+- [ ] UI changes based on selected language
+- [ ] Voice pronounces numbers as words
+- [ ] Voice pronounces result on correct answer
 - [ ] FINISH button exits game and returns to menu
 - [ ] Works on tablet/phone
 - [ ] Works offline
