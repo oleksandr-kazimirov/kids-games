@@ -792,7 +792,7 @@
     // =========================================================================
 
     const CONFIG = {
-        TIMING: { CORRECT_DELAY: 500, WRONG_SHOW_DELAY: 1700, WRONG_CORRECT_DELAY: 1700, AUTO_SUBMIT_DELAY: 2000, CONGRATS_DURATION: 1500, TIMER_INTERVAL: 1000, PROBLEM_DISPLAY_DELAY: 500, MIC_START_DELAY: 500, MIC_RETRY_DELAY: 250 },
+        TIMING: { CORRECT_DELAY: 500, WRONG_SHOW_DELAY: 1700, WRONG_CORRECT_DELAY: 1700, AUTO_SUBMIT_DELAY: 2000, CONGRATS_DURATION: 1500, TIMER_INTERVAL: 1000, PROBLEM_DISPLAY_DELAY: 300, MIC_START_DELAY: 1000, MIC_RETRY_DELAY: 500 },
         GAME: { MIN_NUMBER: 2, MAX_NUMBER: 10, MULTIPLIER_RANGE: [1, 10], RETRY_POSITION: [3, 7] },
         CONGRATS: [['🌟','Great job!'],['🎉','Amazing!'],['🏆','Fantastic!'],['⭐','Super star!'],['🚀','Excellent!'],['🔥',"You're on fire!"],['👏','Keep it up!'],['💪','Math champion!'],['🎯','Brilliant!'],['✨','Outstanding!']]
     };
@@ -914,52 +914,74 @@
             this.onInterim = callbacks.onInterim;
             this.onStop = callbacks.onStop;
             this.recognition = null;
-            this.isListening = false;
+            this.status = 'idle'; // idle, starting, listening, stopping
             this.lastRecognized = null;
-            this.aborted = false;
-            this.supported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
-            if (this.supported) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                this.recognition = new SpeechRecognition();
-                this.recognition.continuous = false;
-                this.recognition.interimResults = true;
-                this.recognition.maxAlternatives = 5;
-                this.recognition.onresult = e => this.handleResult(e);
-                this.recognition.onend = () => this.handleEnd();
-                this.recognition.onerror = () => this.handleEnd();
+            this.userStopped = false;
+            this.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            this.supported = !!this.SpeechRecognition;
+        }
+
+        createRecognition() {
+            if (this.recognition) {
+                this.recognition.onresult = null;
+                this.recognition.onend = null;
+                this.recognition.onerror = null;
+                this.recognition.onstart = null;
             }
+            this.recognition = new this.SpeechRecognition();
+            this.recognition.continuous = false;
+            this.recognition.interimResults = true;
+            this.recognition.maxAlternatives = 5;
+            this.recognition.lang = this.state.voiceLanguage === 'uk' ? 'uk-UA' : 'en-US';
+            this.recognition.onstart = () => {
+                this.status = 'listening';
+            };
+            this.recognition.onresult = e => this.handleResult(e);
+            this.recognition.onend = () => this.handleEnd();
+            this.recognition.onerror = e => this.handleError(e);
         }
 
         start() {
-            if (!this.supported || this.isListening) return false;
+            if (!this.supported) return false;
+            if (this.status !== 'idle') return false;
             try {
-                this.recognition.lang = this.state.voiceLanguage === 'uk' ? 'uk-UA' : 'en-US';
-                this.isListening = true;
+                this.createRecognition();
+                this.status = 'starting';
                 this.lastRecognized = null;
+                this.userStopped = false;
                 this.recognition.start();
                 return true;
             } catch (e) {
-                this.isListening = false;
+                this.status = 'idle';
                 return false;
             }
         }
 
         stop() {
-            if (this.isListening) {
-                this.isListening = false;
-                this.aborted = true;
-                try { this.recognition.abort(); } catch (e) {}
-            }
+            if (this.status === 'idle') return;
+            this.userStopped = true;
+            this.status = 'stopping';
+            try { this.recognition.abort(); } catch (e) {}
         }
 
         handleEnd() {
-            const wasListening = this.isListening;
-            const wasAborted = this.aborted;
-            this.isListening = false;
-            this.aborted = false;
-            if (!wasAborted) this.onStop?.();
-            if (wasListening && !wasAborted && this.lastRecognized !== null) {
-                this.onResult(String(this.lastRecognized));
+            const wasUserStopped = this.userStopped;
+            const recognized = this.lastRecognized;
+            this.status = 'idle';
+            this.userStopped = false;
+            if (!wasUserStopped) {
+                this.onStop?.();
+                if (recognized !== null) {
+                    this.onResult(String(recognized));
+                }
+            }
+        }
+
+        handleError(e) {
+            if (e.error === 'aborted') return;
+            if (e.error === 'no-speech' || e.error === 'audio-capture' || e.error === 'not-allowed') {
+                this.status = 'idle';
+                this.onStop?.();
             }
         }
 
@@ -975,6 +997,9 @@
                 }
             }
         }
+
+        get isListening() { return this.status === 'listening'; }
+        get isReady() { return this.status === 'idle'; }
     }
 
     // =========================================================================
@@ -1281,21 +1306,23 @@
             this.ui.showScreen('game');
         }
 
-        autoStartMic(retries = 3) {
+        autoStartMic(retries = 5) {
             if (!this.recognizer?.supported || this.state.isProcessing) return;
             this.recognizer.stop();
             this.ui.setMicListening(true);
-            setTimeout(() => this.tryStartMic(retries), CONFIG.TIMING.MIC_START_DELAY);
+            this.waitAndStartMic(retries, CONFIG.TIMING.MIC_START_DELAY);
         }
 
-        tryStartMic(retries) {
-            if (this.state.isProcessing) return;
-            if (this.recognizer.start()) return;
-            if (retries > 0) {
-                setTimeout(() => this.tryStartMic(retries - 1), CONFIG.TIMING.MIC_RETRY_DELAY);
-            } else {
-                this.ui.setMicListening(false);
-            }
+        waitAndStartMic(retries, delay) {
+            setTimeout(() => {
+                if (this.state.isProcessing) { this.ui.setMicListening(false); return; }
+                if (this.recognizer.isReady && this.recognizer.start()) return;
+                if (retries > 0) {
+                    this.waitAndStartMic(retries - 1, CONFIG.TIMING.MIC_RETRY_DELAY);
+                } else {
+                    this.ui.setMicListening(false);
+                }
+            }, delay);
         }
 
         async checkAnswer() {
@@ -1396,9 +1423,15 @@
 
         startListening() {
             if (this.state.isProcessing || !this.recognizer?.supported) return;
+            if (this.recognizer.isListening) {
+                this.recognizer.stop();
+                this.ui.setMicListening(false);
+                return;
+            }
             this.speech.cancel();
+            this.recognizer.stop();
             this.ui.setMicListening(true);
-            this.recognizer.start();
+            this.waitAndStartMic(5, 100);
         }
 
         setRecognizer(recognizer) { this.recognizer = recognizer; }
