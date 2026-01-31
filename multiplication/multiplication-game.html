@@ -1077,6 +1077,8 @@
                 if (State.isPracticeMode()) {
                     State.masteredPairs.add(State.currentProblem.key);
                 }
+                // Show checkmark for correct answer
+                answerEl.innerHTML = `${State.currentAnswer} <span style="color:var(--success);font-size:48px;margin-left:12px">✓</span>`;
                 if (State.streak > 0 && State.streak % 5 === 0) {
                     setTimeout(() => UI.showCongrats(), 300);
                 }

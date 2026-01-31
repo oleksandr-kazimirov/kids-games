@@ -95,6 +95,7 @@ Child enters digits
        │
        ▼
    Correct? ──► YES ──► Auto-submit (no CHECK needed!)
+       │               Show green ✓ checkmark
        │               Green flash → Next problem
        │               Congrats popup (every 5 streak)
        │
