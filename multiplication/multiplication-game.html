@@ -973,7 +973,7 @@
                     const p = h.problem;
                     html += `
                         <div class="result-item wrong">
-                            <span class="result-problem">${p.a} × ${p.b} = <s style="color:var(--gray-400)">${h.userAnswer}</s> ${p.result}</span>
+                            <span class="result-problem">${p.a} × ${p.b} = <s style="color:var(--error)">${h.userAnswer}</s> → <strong style="color:var(--success)">${p.result}</strong></span>
                             <span class="result-status wrong">✗</span>
                         </div>`;
                 });
