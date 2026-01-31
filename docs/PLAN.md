@@ -13,7 +13,7 @@ A tablet-optimized multiplication learning game for children (ages 7-9) built as
 - Works offline
 - Touch-friendly for tablets
 - Responsive for all screen sizes
-- Optional voice (reads problems aloud)
+- Optional voice (reads problems aloud in English or Ukrainian)
 
 ---
 
@@ -48,6 +48,7 @@ A tablet-optimized multiplication learning game for children (ages 7-9) built as
 | Tasks (Fixed only) | 5, 10, 15, 20 | 10 |
 | Max Mistakes (Fixed only) | 1, 2, 3, Unlimited | 3 |
 | Voice | On / Off | Off |
+| Voice Language | English / Ukrainian | English |
 
 ---
 
@@ -171,6 +172,9 @@ kids-games/
 - [ ] Timer works in all modes
 - [ ] Results show mistakes only
 - [ ] Congrats every 5 streak
+- [ ] Voice pronounces numbers as words (English)
+- [ ] Voice pronounces numbers as words (Ukrainian)
+- [ ] Voice language selection works
 - [ ] Works on tablet/phone
 - [ ] Works offline
 

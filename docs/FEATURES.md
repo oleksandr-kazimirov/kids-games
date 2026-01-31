@@ -7,36 +7,36 @@
 ## Feature: Fixed Tasks Mode
 
 ```gherkin
-Scenario: Complete fixed session without mistakes
-  Given session_type = "fixed"
-  And total_tasks = 10
-  And max_mistakes = 3
+Scenario A: Complete fixed session without mistakes
+  Given session type is "fixed"
+    And total tasks is 10
+    And max mistakes is 3
   When user answers all 10 problems correctly
   Then game ends with success
-  And results show "10 / 10 mastered"
-  And results show "0 mistakes"
+    And results show "10 / 10 mastered"
+    And mistakes shown is 0
 
-Scenario: Wrong answer repeats until correct
-  Given session_type = "fixed"
-  And total_tasks = 5
-  And problem queue = [Q1, Q2, Q3, Q4, Q5]
+Scenario B: Wrong answer repeats until correct
+  Given session type is "fixed"
+    And total tasks is 5
+    And problem queue is [Q1, Q2, Q3, Q4, Q5]
   When user answers Q1 incorrectly
   Then show correct answer for 5 seconds
-  And Q1 is re-queued at position 3-7
-  And queue becomes [Q2, Q3, Q4, Q1, Q5] (example)
+    And queue becomes [Q2, Q3, Q4, Q1, Q5]
   When user later answers Q1 correctly
-  Then Q1 is marked as mastered
-  And game continues until queue is empty
+  Then Q1 is mastered
+    And game continues
 
-Scenario: Game ends only when all mastered
-  Given session_type = "fixed"
-  And total_tasks = 5
-  And user makes 10 mistakes on various problems
-  Then game does NOT end (no fail state)
-  When all 5 problems are eventually answered correctly
-  Then game ends with success
-  And results show "5 / 5 mastered"
-  And results show "10 mistakes corrected"
+Scenario C: Game ends only when all mastered
+  Given session type is "fixed"
+    And total tasks is 5
+    And user makes 10 mistakes
+  Then game over is false (no fail state!)
+  When all 5 problems eventually answered correctly
+  Then game over is true
+    And success is true
+    And results show "5 / 5 mastered"
+    And message is "Completed with 10 mistakes corrected!"
 ```
 
 ---
@@ -44,31 +44,33 @@ Scenario: Game ends only when all mastered
 ## Feature: Practice All Tables Mode
 
 ```gherkin
-Scenario: Practice all tables from 2 to max
-  Given session_type = "practice-all"
-  And max_number = 5
-  Then generate problems for tables 2, 3, 4, 5
-  And each table has 10 problems (×1 through ×10)
-  And total problems = 4 × 10 = 40
+Scenario A: Practice all tables from 2 to max
+  Given session type is "practice-all"
+    And max number is 5
+  Then tables generated are [2, 3, 4, 5]
+    And problems per table is 10 (x1 through x10)
+    And total problems is 40
 
-Scenario: Complete all combinations
-  Given session_type = "practice-all"
-  And max_number = 3
-  And problems = [2×1, 2×2, ..., 2×10, 3×1, 3×2, ..., 3×10]
+Scenario B: Complete all combinations
+  Given session type is "practice-all"
+    And max number is 3
+    And problems are [2x1, 2x2, ..., 2x10, 3x1, 3x2, ..., 3x10]
   When user answers all 20 problems correctly
   Then results show "20 / 20 mastered"
-  And results show "All tables mastered in {time}"
+    And message is "All tables mastered in {time}"
 
-Scenario: Wrong answers repeat in practice-all
-  Given session_type = "practice-all"
-  And current_problem = "3 × 7"
-  When user answers "18" (incorrect)
-  Then show "~~18~~ → 21" for 5 seconds
-  And voice says "The answer is 21"
-  And "3 × 7" is added back to queue
-  When "3 × 7" appears again later
-  And user answers "21" (correct)
-  Then "3 × 7" is marked as mastered
+Scenario C: Wrong answers repeat in practice-all
+  Given session type is "practice-all"
+    And current problem is 3 x 7 = 21
+  When user answers 18 (incorrect)
+  Then display shows "~~18~~ -> 21"
+    And display duration is 5 seconds
+    And voice says "The answer is twenty-one"
+    And problem is requeued
+  When problem 3x7 appears again
+    And user answers 21 (correct)
+  Then problem is mastered
+    And display shows "21 checkmark"
 ```
 
 ---
@@ -76,18 +78,18 @@ Scenario: Wrong answers repeat in practice-all
 ## Feature: Practice One Table Mode
 
 ```gherkin
-Scenario: Practice single table
-  Given session_type = "practice-one"
-  And practice_number = 7
-  Then generate problems: 7×1, 7×2, 7×3, ..., 7×10
-  And total problems = 10
+Scenario A: Practice single table
+  Given session type is "practice-one"
+    And practice number is 7
+  Then problems are [7x1, 7x2, 7x3, 7x4, 7x5, 7x6, 7x7, 7x8, 7x9, 7x10]
+    And total problems is 10
 
-Scenario: Master single table
-  Given session_type = "practice-one"
-  And practice_number = 5
+Scenario B: Master single table
+  Given session type is "practice-one"
+    And practice number is 5
   When user answers all 10 problems correctly
-  Then results show "Table of 5 mastered in {time}"
-  And results show "10 / 10"
+  Then results show "10 / 10"
+    And message is "Table of 5 mastered in {time}"
 ```
 
 ---
@@ -95,26 +97,26 @@ Scenario: Master single table
 ## Feature: Question Types
 
 ```gherkin
-Scenario: Result mode (find the answer)
-  Given game_mode = "result"
-  And problem = { a: 7, b: 8 }
-  Then display "7 × 8 = ?"
-  And voice says "7 times 8"
-  And expected_answer = 56
+Scenario A: Result mode (find the answer)
+  Given game mode is "result"
+    And problem is 7 x 8
+  Then display shows "7 x 8 = ?"
+    And voice says "seven times eight"
+    And expected answer is 56
 
-Scenario: Multiplier mode (find the factor)
-  Given game_mode = "multiplier"
-  And problem = { a: 7, b: 8, hidden: "a" }
-  Then display "? × 8 = 56"
-  And voice says "What times 8 equals 56"
-  And expected_answer = 7
+Scenario B: Multiplier mode (find factor A)
+  Given game mode is "multiplier"
+    And problem is 7 x 8 with hidden A
+  Then display shows "? x 8 = 56"
+    And voice says "What times eight equals fifty-six"
+    And expected answer is 7
 
-Scenario: Multiplier mode - other factor hidden
-  Given game_mode = "multiplier"
-  And problem = { a: 7, b: 8, hidden: "b" }
-  Then display "7 × ? = 56"
-  And voice says "7 times what equals 56"
-  And expected_answer = 8
+Scenario C: Multiplier mode (find factor B)
+  Given game mode is "multiplier"
+    And problem is 7 x 8 with hidden B
+  Then display shows "7 x ? = 56"
+    And voice says "Seven times what equals fifty-six"
+    And expected answer is 8
 ```
 
 ---
@@ -122,25 +124,26 @@ Scenario: Multiplier mode - other factor hidden
 ## Feature: Auto-Submit on Correct Answer
 
 ```gherkin
-Scenario: Correct answer auto-submits
-  Given current_problem.answer = 56
+Scenario A: Correct answer auto-submits
+  Given current problem answer is 56
   When user types "5"
-  Then answer_display shows "5"
-  And no auto-submit (5 ≠ 56)
+  Then answer display shows "5"
+    And auto-submit is false (5 != 56)
   When user types "6"
-  Then answer_display shows "56"
-  And auto-submit triggers (56 === 56)
-  And show "56 ✓" with green checkmark
-  And voice says "Correct!"
+  Then answer display shows "56"
+    And auto-submit is true (56 === 56)
+    And display shows "56 checkmark"
+    And voice says "Correct!"
 
-Scenario: Wrong answer requires CHECK button
-  Given current_problem.answer = 56
+Scenario B: Wrong answer requires CHECK button
+  Given current problem answer is 56
   When user types "48"
-  Then answer_display shows "48"
-  And no auto-submit (48 ≠ 56)
+  Then answer display shows "48"
+    And auto-submit is false (48 != 56)
   When user clicks CHECK button
-  Then show "~~48~~ → 56" for 5 seconds
-  And voice says "The answer is 56"
+  Then display shows "~~48~~ -> 56"
+    And display duration is 5 seconds
+    And voice says "The answer is fifty-six"
 ```
 
 ---
@@ -148,26 +151,38 @@ Scenario: Wrong answer requires CHECK button
 ## Feature: Voice (Optional)
 
 ```gherkin
-Scenario: Voice disabled by default
-  Given checkbox_voice.checked = false
+Scenario A: Voice disabled by default
+  Given voice is disabled
   When problem is displayed
-  Then no speech occurs
+  Then speech does not occur
 
-Scenario: Voice enabled
-  Given checkbox_voice.checked = true
-  When problem "7 × 8 = ?" is displayed
-  Then voice says "7 times 8"
-  When user answers correctly
+Scenario B: Voice enabled with English
+  Given voice is enabled
+    And language is "English"
+  When problem "7 x 8 = ?" is displayed
+  Then voice says "seven times eight"
+  When user answers correct
   Then voice says "Correct!"
-  When user answers incorrectly
-  Then voice says "The answer is 56"
+  When user answers incorrect
+  Then voice says "The answer is fifty-six"
 
-Scenario: Voice works offline
-  Given voice_enabled = true
-  And device is offline
+Scenario C: Voice enabled with Ukrainian
+  Given voice is enabled
+    And language is "Ukrainian"
+  When problem "7 x 8 = ?" is displayed
+  Then voice says "sim na visim"
+  When user answers correct
+  Then voice says "Pravylno!"
+  When user answers incorrect
+  Then voice says "Vidpovid: piatdesiat shist"
+
+Scenario D: Voice works offline
+  Given voice is enabled
+    And device is offline
   When problem is displayed
-  Then Web Speech API uses device's built-in TTS
-  And voice still works
+  Then uses Web Speech API
+    And uses device built-in TTS
+    And voice works
 ```
 
 ---
@@ -175,19 +190,19 @@ Scenario: Voice works offline
 ## Feature: Progress Display
 
 ```gherkin
-Scenario: Show mastered count and remaining
-  Given total_problems = 40
-  And mastered_count = 15
-  And queue_length = 28 (includes retries)
-  And mistakes = 3
-  Then progress shows "Mastered: 15 / 40"
-  And status shows "Mistakes: 3 | Left: 28"
+Scenario A: Show mastered count and remaining
+  Given total problems is 40
+    And mastered count is 15
+    And queue length is 28 (includes retries)
+    And mistakes is 3
+  Then progress text shows "Mastered: 15 / 40"
+    And status text shows "Mistakes: 3 | Left: 28"
 
-Scenario: No mistakes yet
-  Given mistakes = 0
-  And queue_length = 35
-  Then status shows "Left: 35"
-  And status color = blue (remaining)
+Scenario B: No mistakes yet
+  Given mistakes is 0
+    And queue length is 35
+  Then status text shows "Left: 35"
+    And status color is blue
 ```
 
 ---
@@ -195,20 +210,24 @@ Scenario: No mistakes yet
 ## Feature: Results Screen
 
 ```gherkin
-Scenario: Perfect score (no mistakes)
-  Given all problems answered correctly on first try
-  Then results show "Perfect! No mistakes!"
-  And mistake list shows "No mistakes! Perfect!"
-  And summary background = green
+Scenario A: Perfect score (no mistakes)
+  Given all answers correct on first try
+    And mistakes is 0
+  Then message shows "Perfect! No mistakes!"
+    And mistake list shows "No mistakes! Perfect!"
+    And summary style is success (green)
 
-Scenario: Completed with mistakes
-  Given mistakes = 5
-  And all problems eventually mastered
-  Then results show "Completed with 5 mistakes corrected!"
-  And mistake list shows each mistake:
-    | Problem     | Display                    |
-    | 3 × 5 = 15  | 3 × 5 = ~~22~~ → 15  ✗    |
-    | 9 × 3 = 27  | 9 × 3 = ~~18~~ → 27  ✗    |
+Scenario B: Completed with mistakes
+  Given mistakes is 5
+    And all problems mastered
+    And mistake history includes:
+      | problem | user answer | correct |
+      | 3 x 5   | 22          | 15      |
+      | 9 x 3   | 18          | 27      |
+  Then message shows "Completed with 5 mistakes corrected!"
+    And mistake list shows:
+      | "3 x 5 = ~~22~~ -> 15  X" |
+      | "9 x 3 = ~~18~~ -> 27  X" |
 ```
 
 ---
@@ -216,19 +235,19 @@ Scenario: Completed with mistakes
 ## Feature: Timer
 
 ```gherkin
-Scenario: Timer runs during game
-  Given game starts at 00:00
-  When 65 seconds pass
-  Then timer shows "01:05"
+Scenario A: Timer runs during game
+  Given game has started
+  When 65 seconds have elapsed
+  Then timer display shows "01:05"
   When game ends
   Then results show "mastered in 01:05"
 
-Scenario: Timer stops on game end
+Scenario B: Timer stops on game end
   Given timer is running
   When all problems are mastered
-  Then timer stops
-  And elapsed_time is saved
-  And displayed in results
+  Then timer is stopped
+    And elapsed time is saved
+    And time is displayed in results
 ```
 
 ---
@@ -236,20 +255,21 @@ Scenario: Timer stops on game end
 ## Feature: Congratulations Popup
 
 ```gherkin
-Scenario: Congrats every 5 correct streak
-  Given streak = 4
+Scenario A: Congrats every 5 correct streak
+  Given streak is 4
   When user answers correctly
-  Then streak = 5
-  And congrats popup appears
-  And shows random emoji + message (e.g., "🌟 Great job!")
-  And shows "5 correct in a row!"
-  And popup auto-dismisses after 1.5 seconds
+  Then streak becomes 5
+    And congrats popup appears
+    And emoji is random (star, etc.)
+    And message is random ("Great job!", etc.)
+    And subtext shows "5 correct in a row!"
+    And auto-dismiss after 1.5 seconds
 
-Scenario: Streak resets on wrong answer
-  Given streak = 4
+Scenario B: Streak resets on wrong answer
+  Given streak is 4
   When user answers incorrectly
-  Then streak = 0
-  And no congrats popup
+  Then streak becomes 0
+    And congrats popup does not appear
 ```
 
 ---
@@ -257,28 +277,33 @@ Scenario: Streak resets on wrong answer
 ## Feature: Learn Mode
 
 ```gherkin
-Scenario: View multiplication table
-  Given user is on learn screen
-  When user clicks number button "7"
-  Then display multiplication table:
-    | 7 × 1  = 7  |
-    | 7 × 2  = 14 |
-    | 7 × 3  = 21 |
-    | ...         |
-    | 7 × 10 = 70 |
-  And button "7" is highlighted as selected
+Scenario A: View multiplication table
+  Given screen is "learn"
+  When user clicks number button 7
+  Then table is displayed:
+    | 7 x 1  = 7  |
+    | 7 x 2  = 14 |
+    | 7 x 3  = 21 |
+    | 7 x 4  = 28 |
+    | 7 x 5  = 35 |
+    | 7 x 6  = 42 |
+    | 7 x 7  = 49 |
+    | 7 x 8  = 56 |
+    | 7 x 9  = 63 |
+    | 7 x 10 = 70 |
+    And button 7 is highlighted
 ```
 
 ---
 
 ## Test Matrix
 
-| Mode | Tasks | Retry | Auto-Submit | Voice | Timer |
-|------|-------|-------|-------------|-------|-------|
-| Fixed | User-defined | ✅ | ✅ | Optional | ✅ |
-| Practice All | (max-1) × 10 | ✅ | ✅ | Optional | ✅ |
-| Practice One | 10 | ✅ | ✅ | Optional | ✅ |
+| Mode | Tasks | Retry | Auto-Submit | Voice | Timer | Congrats |
+|------|-------|-------|-------------|-------|-------|----------|
+| Fixed | User-defined | Yes | Yes | EN/UK | Yes | Yes |
+| Practice All | (max-1) x 10 | Yes | Yes | EN/UK | Yes | Yes |
+| Practice One | 10 | Yes | Yes | EN/UK | Yes | Yes |
 
 ---
 
-*All scenarios should pass before release* ✅
+*All scenarios should pass before release*

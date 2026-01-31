@@ -542,6 +542,16 @@
                 </label>
             </div>
 
+            <div id="voice-language-settings" class="setting-group" style="display:none">
+                <label class="setting-label">Voice Language:</label>
+                <div class="select-wrapper">
+                    <select id="select-voice-language">
+                        <option value="en">🇬🇧 English</option>
+                        <option value="uk">🇺🇦 Українська</option>
+                    </select>
+                </div>
+            </div>
+
             <button id="btn-start" class="btn btn-primary">START</button>
             <button id="btn-settings-back" class="btn btn-outline">BACK</button>
         </div>
@@ -671,14 +681,87 @@
         },
 
         /** Speak text using Web Speech API (if enabled) */
-        speak(text) {
+        speak(text, lang = null) {
             if (State.voiceEnabled && 'speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
+                const language = lang || State.voiceLanguage;
+                utterance.lang = language === 'uk' ? 'uk-UA' : 'en-US';
                 utterance.rate = 0.9;
                 utterance.pitch = 1.1;
                 window.speechSynthesis.speak(utterance);
             }
+        },
+
+        /** Convert number to words in selected language */
+        numberToWords(num) {
+            const lang = State.voiceLanguage;
+
+            const wordsEN = {
+                ones: ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+                       'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen',
+                       'eighteen', 'nineteen'],
+                tens: ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'],
+                hundred: 'hundred'
+            };
+
+            const wordsUK = {
+                ones: ['', 'один', 'два', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', "дев'ять", 'десять',
+                       'одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', "п'ятнадцять", 'шістнадцять',
+                       'сімнадцять', 'вісімнадцять', "дев'ятнадцять"],
+                tens: ['', '', 'двадцять', 'тридцять', 'сорок', "п'ятдесят", 'шістдесят', 'сімдесят',
+                       'вісімдесят', "дев'яносто"],
+                hundred: 'сто'
+            };
+
+            const words = lang === 'uk' ? wordsUK : wordsEN;
+
+            if (num === 0) return lang === 'uk' ? 'нуль' : 'zero';
+            if (num < 20) return words.ones[num];
+            if (num < 100) {
+                const t = Math.floor(num / 10);
+                const o = num % 10;
+                return words.tens[t] + (o > 0 ? (lang === 'uk' ? ' ' : '-') + words.ones[o] : '');
+            }
+            // 100
+            return words.hundred;
+        },
+
+        /** Get speech text for problem */
+        getProblemSpeech(problem) {
+            const lang = State.voiceLanguage;
+            const a = this.numberToWords(problem.a);
+            const b = this.numberToWords(problem.b);
+            const result = this.numberToWords(problem.result);
+
+            if (State.gameMode === 'result') {
+                return lang === 'uk'
+                    ? `${a} на ${b}`
+                    : `${a} times ${b}`;
+            } else {
+                if (problem.hidden === 'a') {
+                    return lang === 'uk'
+                        ? `Що на ${b} дорівнює ${result}`
+                        : `What times ${b} equals ${result}`;
+                } else {
+                    return lang === 'uk'
+                        ? `${a} на що дорівнює ${result}`
+                        : `${a} times what equals ${result}`;
+                }
+            }
+        },
+
+        /** Get speech text for correct answer */
+        getCorrectSpeech() {
+            return State.voiceLanguage === 'uk' ? 'Правильно!' : 'Correct!';
+        },
+
+        /** Get speech text for wrong answer */
+        getWrongSpeech(correctAnswer) {
+            const answerWord = this.numberToWords(correctAnswer);
+            return State.voiceLanguage === 'uk'
+                ? `Відповідь: ${answerWord}`
+                : `The answer is ${answerWord}`;
         }
     };
 
@@ -695,6 +778,7 @@
         totalTasks: 10,
         maxMistakes: 3,
         voiceEnabled: false,
+        voiceLanguage: 'en',
 
         // Game state
         currentTask: 0,
@@ -841,22 +925,18 @@
         /** Display the current problem */
         displayProblem() {
             const p = State.currentProblem;
-            let html, speech;
+            let html;
 
             if (State.gameMode === 'result') {
                 html = `${p.a} × ${p.b} = <span class="unknown">?</span>`;
-                speech = `${p.a} times ${p.b}`;
             } else {
                 const aDisplay = p.hidden === 'a' ? '<span class="unknown">?</span>' : p.a;
                 const bDisplay = p.hidden === 'b' ? '<span class="unknown">?</span>' : p.b;
                 html = `${aDisplay} × ${bDisplay} = ${p.result}`;
-                speech = p.hidden === 'a'
-                    ? `What times ${p.b} equals ${p.result}`
-                    : `${p.a} times what equals ${p.result}`;
             }
 
             Utils.$('display-problem').innerHTML = html;
-            Utils.speak(speech);
+            Utils.speak(Utils.getProblemSpeech(p));
         },
 
         /** Update progress display */
@@ -1043,6 +1123,7 @@
             State.totalTasks = parseInt(Utils.$('select-total-tasks').value);
             State.maxMistakes = parseInt(Utils.$('select-max-mistakes').value);
             State.voiceEnabled = Utils.$('checkbox-voice').checked;
+            State.voiceLanguage = Utils.$('select-voice-language').value;
 
             // Reset state
             State.reset();
@@ -1098,7 +1179,7 @@
                 State.masteredPairs.add(State.currentProblem.key);
                 // Show checkmark for correct answer
                 answerEl.innerHTML = `${State.currentAnswer} <span style="color:var(--success);font-size:48px;margin-left:12px">✓</span>`;
-                Utils.speak('Correct!');
+                Utils.speak(Utils.getCorrectSpeech());
                 if (State.streak > 0 && State.streak % 5 === 0) {
                     setTimeout(() => UI.showCongrats(), 300);
                 }
@@ -1108,7 +1189,7 @@
 
                 // Show correct answer (big and green)
                 answerEl.innerHTML = `<span style="text-decoration:line-through;color:var(--gray-400)">${State.currentAnswer}</span> <span style="color:var(--gray-400);font-size:24px">→</span> <span style="color:var(--success);font-size:56px;font-weight:800">${State.currentProblem.answer}</span>`;
-                Utils.speak(`The answer is ${State.currentProblem.answer}`);
+                Utils.speak(Utils.getWrongSpeech(State.currentProblem.answer));
 
                 // Re-queue problem to repeat later (all modes)
                 const retryProblem = ProblemGenerator.createProblem(
@@ -1227,6 +1308,10 @@
             const value = e.target.value;
             Utils.$('fixed-mode-settings').classList.toggle('hidden', value !== 'fixed');
             Utils.$('practice-one-settings').style.display = value === 'practice-one' ? 'block' : 'none';
+        });
+
+        Utils.$('checkbox-voice').addEventListener('change', e => {
+            Utils.$('voice-language-settings').style.display = e.target.checked ? 'block' : 'none';
         });
 
         // Navigation buttons
