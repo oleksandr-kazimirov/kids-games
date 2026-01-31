@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multiplication Game - Tests</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        h1 { color: #333; }
+        .test-suite { margin: 20px 0; padding: 15px; border-radius: 8px; background: #f5f5f5; }
+        .test-suite h2 { margin: 0 0 10px; font-size: 18px; }
+        .test { padding: 8px 12px; margin: 4px 0; border-radius: 4px; font-family: monospace; }
+        .test.pass { background: #e8f5e9; color: #2e7d32; }
+        .test.fail { background: #ffebee; color: #c62828; }
+        .summary { padding: 20px; border-radius: 8px; margin-top: 20px; font-size: 18px; font-weight: bold; }
+        .summary.pass { background: #c8e6c9; color: #1b5e20; }
+        .summary.fail { background: #ffcdd2; color: #b71c1c; }
+    </style>
+</head>
+<body>
+    <h1>Multiplication Game - Unit Tests</h1>
+    <div id="results"></div>
+    <div id="summary"></div>
+
+<script>
+// Simple test framework
+const tests = [];
+let passed = 0, failed = 0;
+
+function describe(name, fn) {
+    const suite = { name, tests: [] };
+    tests.push(suite);
+    const it = (desc, testFn) => suite.tests.push({ desc, testFn });
+    fn(it);
+}
+
+function expect(actual) {
+    return {
+        toBe: (expected) => {
+            if (actual !== expected) throw new Error(`Expected ${expected}, got ${actual}`);
+        },
+        toEqual: (expected) => {
+            if (JSON.stringify(actual) !== JSON.stringify(expected))
+                throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+        },
+        toBeNull: () => {
+            if (actual !== null) throw new Error(`Expected null, got ${actual}`);
+        },
+        toBeGreaterThan: (n) => {
+            if (actual <= n) throw new Error(`Expected ${actual} > ${n}`);
+        },
+        toBeLessThanOrEqual: (n) => {
+            if (actual > n) throw new Error(`Expected ${actual} <= ${n}`);
+        },
+        toContain: (substr) => {
+            if (!actual.includes(substr)) throw new Error(`Expected "${actual}" to contain "${substr}"`);
+        },
+        toBeTrue: () => {
+            if (actual !== true) throw new Error(`Expected true, got ${actual}`);
+        },
+        toBeFalse: () => {
+            if (actual !== false) throw new Error(`Expected false, got ${actual}`);
+        }
+    };
+}
+
+function runTests() {
+    const resultsEl = document.getElementById('results');
+
+    for (const suite of tests) {
+        const suiteEl = document.createElement('div');
+        suiteEl.className = 'test-suite';
+        suiteEl.innerHTML = `<h2>${suite.name}</h2>`;
+
+        for (const test of suite.tests) {
+            const testEl = document.createElement('div');
+            testEl.className = 'test';
+            try {
+                test.testFn();
+                testEl.className += ' pass';
+                testEl.textContent = `✓ ${test.desc}`;
+                passed++;
+            } catch (e) {
+                testEl.className += ' fail';
+                testEl.textContent = `✗ ${test.desc} - ${e.message}`;
+                failed++;
+            }
+            suiteEl.appendChild(testEl);
+        }
+        resultsEl.appendChild(suiteEl);
+    }
+
+    const summaryEl = document.getElementById('summary');
+    summaryEl.className = 'summary ' + (failed === 0 ? 'pass' : 'fail');
+    summaryEl.textContent = `${passed} passed, ${failed} failed`;
+}
+
+// =========================================================================
+// COPY CLASSES FROM MAIN FILE FOR TESTING
+// =========================================================================
+
+class Utility {
+    static randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    static shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = this.randomInt(0, i); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+    static pairKey(a, b) { return a < b ? `${a}x${b}` : `${b}x${a}`; }
+    static formatTime(ms) { const s = Math.floor(ms / 1000); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
+}
+
+class NumberWords {
+    static WORDS = {
+        en: { ones: ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'], tens: ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'], hundred: 'one hundred', sep: '-' },
+        uk: { ones: ['нуль','один','два','три','чотири',"п'ять",'шість','сім','вісім',"дев'ять",'десять','одинадцять','дванадцять','тринадцять','чотирнадцять',"п'ятнадцять",'шістнадцять','сімнадцять','вісімнадцять',"дев'ятнадцять"], tens: ['','','двадцять','тридцять','сорок',"п'ятдесят",'шістдесят','сімдесят','вісімдесят',"дев'яносто"], hundred: 'сто', sep: ' ' }
+    };
+
+    static convert(num, lang) {
+        const n = parseInt(num, 10) || 0;
+        const w = this.WORDS[lang] || this.WORDS.en;
+        if (n < 20) return w.ones[n];
+        if (n < 100) { const t = Math.floor(n / 10), o = n % 10; return w.tens[t] + (o > 0 ? w.sep + w.ones[o] : ''); }
+        return w.hundred;
+    }
+
+    static parse(text, lang) {
+        const t = text.toLowerCase().trim().replace(/[.,!?]/g, '');
+        const w = this.WORDS[lang] || this.WORDS.en;
+        const numMatch = t.match(/\d+/);
+        if (numMatch) return parseInt(numMatch[0], 10);
+        for (let i = 0; i < 20; i++) {
+            if (t === w.ones[i] || t.split(/\s+/).includes(w.ones[i])) return i;
+        }
+        for (let i = 2; i < 10; i++) {
+            if (t.includes(w.tens[i])) {
+                let ones = 0;
+                for (let j = 1; j < 10; j++) {
+                    if (t.includes(w.ones[j])) { ones = j; break; }
+                }
+                return i * 10 + ones;
+            }
+        }
+        if (t.includes(w.hundred.split(' ').pop())) return 100;
+        for (let i = 0; i < 20; i++) {
+            if (t.includes(w.ones[i])) return i;
+        }
+        return null;
+    }
+}
+
+class Problem {
+    constructor(a, b, gameMode, noRandomize = false) {
+        if (!noRandomize && Math.random() > 0.5) [a, b] = [b, a];
+        this.a = a;
+        this.b = b;
+        this.result = a * b;
+        this.key = Utility.pairKey(a, b);
+        this.hidden = null;
+        this.answer = this.result;
+        if (gameMode === 'multiplier') {
+            this.hidden = Math.random() > 0.5 ? 'a' : 'b';
+            this.answer = this.hidden === 'a' ? a : b;
+        }
+    }
+
+    getDisplayHTML(input = '', state = '') {
+        const stateClass = state ? ` ${state}` : '';
+        const inputHTML = `<span class="answer-slot${stateClass}">${input || '_'}</span>`;
+        if (this.hidden === 'a') return `${inputHTML} × ${this.b} = ${this.result}`;
+        if (this.hidden === 'b') return `${this.a} × ${inputHTML} = ${this.result}`;
+        return `${this.a} × ${this.b} = ${inputHTML}`;
+    }
+}
+
+// =========================================================================
+// TEST SUITES
+// =========================================================================
+
+describe('Utility', (it) => {
+    it('randomInt returns value in range', () => {
+        for (let i = 0; i < 100; i++) {
+            const val = Utility.randomInt(5, 10);
+            expect(val >= 5).toBeTrue();
+            expect(val <= 10).toBeTrue();
+        }
+    });
+
+    it('pairKey returns consistent key regardless of order', () => {
+        expect(Utility.pairKey(3, 7)).toBe('3x7');
+        expect(Utility.pairKey(7, 3)).toBe('3x7');
+    });
+
+    it('formatTime formats correctly', () => {
+        expect(Utility.formatTime(0)).toBe('00:00');
+        expect(Utility.formatTime(5000)).toBe('00:05');
+        expect(Utility.formatTime(65000)).toBe('01:05');
+        expect(Utility.formatTime(3600000)).toBe('60:00');
+    });
+
+    it('shuffle randomizes array', () => {
+        const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        const original = [...arr];
+        Utility.shuffle(arr);
+        // Very unlikely to be identical after shuffle
+        let sameCount = 0;
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i] === original[i]) sameCount++;
+        }
+        expect(sameCount).toBeLessThanOrEqual(8); // Allow some same positions
+    });
+});
+
+describe('NumberWords.convert (English)', (it) => {
+    it('converts single digits', () => {
+        expect(NumberWords.convert(0, 'en')).toBe('zero');
+        expect(NumberWords.convert(5, 'en')).toBe('five');
+        expect(NumberWords.convert(9, 'en')).toBe('nine');
+    });
+
+    it('converts teens', () => {
+        expect(NumberWords.convert(10, 'en')).toBe('ten');
+        expect(NumberWords.convert(13, 'en')).toBe('thirteen');
+        expect(NumberWords.convert(19, 'en')).toBe('nineteen');
+    });
+
+    it('converts tens', () => {
+        expect(NumberWords.convert(20, 'en')).toBe('twenty');
+        expect(NumberWords.convert(30, 'en')).toBe('thirty');
+        expect(NumberWords.convert(56, 'en')).toBe('fifty-six');
+        expect(NumberWords.convert(99, 'en')).toBe('ninety-nine');
+    });
+
+    it('converts 100', () => {
+        expect(NumberWords.convert(100, 'en')).toBe('one hundred');
+    });
+});
+
+describe('NumberWords.convert (Ukrainian)', (it) => {
+    it('converts single digits', () => {
+        expect(NumberWords.convert(0, 'uk')).toBe('нуль');
+        expect(NumberWords.convert(5, 'uk')).toBe("п'ять");
+        expect(NumberWords.convert(9, 'uk')).toBe("дев'ять");
+    });
+
+    it('converts tens', () => {
+        expect(NumberWords.convert(20, 'uk')).toBe('двадцять');
+        expect(NumberWords.convert(56, 'uk')).toBe("п'ятдесят шість");
+    });
+});
+
+describe('NumberWords.parse (English)', (it) => {
+    it('parses digit strings', () => {
+        expect(NumberWords.parse('56', 'en')).toBe(56);
+        expect(NumberWords.parse('7', 'en')).toBe(7);
+    });
+
+    it('parses single word numbers', () => {
+        expect(NumberWords.parse('six', 'en')).toBe(6);
+        expect(NumberWords.parse('twelve', 'en')).toBe(12);
+    });
+
+    it('parses compound numbers', () => {
+        expect(NumberWords.parse('fifty-six', 'en')).toBe(56);
+        expect(NumberWords.parse('twenty one', 'en')).toBe(21);
+    });
+
+    it('parses with extra text', () => {
+        expect(NumberWords.parse('the answer is 42', 'en')).toBe(42);
+        expect(NumberWords.parse('I think six', 'en')).toBe(6);
+    });
+
+    it('returns null for unrecognized', () => {
+        expect(NumberWords.parse('hello world', 'en')).toBeNull();
+    });
+});
+
+describe('Problem (result mode)', (it) => {
+    it('creates problem with correct answer', () => {
+        const p = new Problem(7, 8, 'result', true);
+        expect(p.a).toBe(7);
+        expect(p.b).toBe(8);
+        expect(p.result).toBe(56);
+        expect(p.answer).toBe(56);
+        expect(p.hidden).toBeNull();
+    });
+
+    it('generates display HTML with placeholder', () => {
+        const p = new Problem(7, 8, 'result', true);
+        const html = p.getDisplayHTML();
+        expect(html).toContain('7 × 8 =');
+        expect(html).toContain('_');
+    });
+
+    it('generates display HTML with input', () => {
+        const p = new Problem(7, 8, 'result', true);
+        const html = p.getDisplayHTML('56');
+        expect(html).toContain('7 × 8 =');
+        expect(html).toContain('56');
+    });
+
+    it('generates display HTML with state', () => {
+        const p = new Problem(7, 8, 'result', true);
+        const html = p.getDisplayHTML('56', 'correct');
+        expect(html).toContain('correct');
+    });
+});
+
+describe('Problem (multiplier mode)', (it) => {
+    it('creates problem with hidden factor', () => {
+        const p = new Problem(7, 8, 'multiplier', true);
+        expect(p.result).toBe(56);
+        expect(p.hidden === 'a' || p.hidden === 'b').toBeTrue();
+        expect(p.answer === 7 || p.answer === 8).toBeTrue();
+    });
+
+    it('display shows ? for hidden factor', () => {
+        // Create multiple to test both cases
+        let foundA = false, foundB = false;
+        for (let i = 0; i < 20 && (!foundA || !foundB); i++) {
+            const p = new Problem(7, 8, 'multiplier', true);
+            const html = p.getDisplayHTML();
+            if (p.hidden === 'a') {
+                expect(html).toContain('_');
+                expect(html).toContain('× 8 = 56');
+                foundA = true;
+            } else {
+                expect(html).toContain('7 ×');
+                expect(html).toContain('_');
+                expect(html).toContain('= 56');
+                foundB = true;
+            }
+        }
+    });
+});
+
+describe('Problem key uniqueness', (it) => {
+    it('same factors produce same key', () => {
+        const p1 = new Problem(3, 7, 'result', true);
+        const p2 = new Problem(7, 3, 'result', true);
+        expect(p1.key).toBe(p2.key);
+    });
+});
+
+// Run tests
+runTests();
+</script>
+</body>
+</html>
