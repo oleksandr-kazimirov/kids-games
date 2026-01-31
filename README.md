@@ -1,5 +1,7 @@
 # Kids Games
 
+**[Play Now](https://oleksandr-kazimirov.github.io/kids-games/multiplication/multiplication-game.html)**
+
 Educational games for children — offline, no dependencies, single HTML files.
 
 ## Multiplication Game
@@ -50,4 +52,4 @@ We'll review and respond as soon as possible.
 
 ---
 
-**Oleksandr Kazimirov & Claude AI**
+**O. Kazimirov** | [oleksandr.kazimirov@gmail.com](mailto:oleksandr.kazimirov@gmail.com)
