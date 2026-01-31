@@ -1232,6 +1232,7 @@
         resetAnswerDisplay() { this.updateProblemDisplay(''); }
         updateAnswerDisplay(value) { this.updateProblemDisplay(value); }
         updateProblemDisplay(input, state = '') {
+            if (!this.state.currentProblem) return;
             Utility.$('display-problem').innerHTML = this.state.currentProblem.getDisplayHTML(input, state);
         }
         setMicListening(listening) { Utility.$('btn-mic')?.classList.toggle('listening', listening); }
