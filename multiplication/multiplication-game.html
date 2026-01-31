@@ -602,7 +602,7 @@
     const CONFIG = {
         TIMING: {
             CORRECT_DELAY: 500,
-            WRONG_DELAY: 1500,
+            WRONG_DELAY: 2500,
             CONGRATS_DURATION: 1500,
             TIMER_INTERVAL: 1000
         },
@@ -1084,8 +1084,8 @@
                 State.streak = 0;
                 State.mistakes++;
 
-                // Show correct answer
-                answerEl.innerHTML = `${State.currentAnswer} <span style="color:var(--gray-600);font-size:24px">→</span> ${State.currentProblem.answer}`;
+                // Show correct answer (big and green)
+                answerEl.innerHTML = `<span style="text-decoration:line-through;color:var(--gray-400)">${State.currentAnswer}</span> <span style="color:var(--gray-400);font-size:24px">→</span> <span style="color:var(--success);font-size:56px;font-weight:800">${State.currentProblem.answer}</span>`;
 
                 // Re-queue problem in practice mode
                 if (State.isPracticeMode()) {
