@@ -298,17 +298,18 @@
         .num-btn.zero { grid-column: span 2; }
         .input-row { display: flex; gap: 12px; }
         .mic-btn {
-            width: 64px;
-            height: 56px;
+            padding: 20px;
             font-size: 28px;
-            border: 2px solid var(--gray-300);
+            font-weight: 600;
+            border: none;
             border-radius: var(--radius-lg);
-            background: #fff;
+            background: #E3F2FD;
+            color: var(--primary);
             cursor: pointer;
             transition: all .2s;
         }
         .mic-btn:active { transform: scale(.95); }
-        .mic-btn.listening { background: #FFEBEE; border-color: var(--error); animation: pulse 1s infinite; }
+        .mic-btn.listening { background: #FFEBEE; color: var(--error); animation: pulse 1s infinite; }
         .mic-btn.disabled { opacity: 0.3; pointer-events: none; }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
@@ -867,23 +868,31 @@
         }
 
         static parse(text, lang) {
-            const t = text.toLowerCase().trim();
+            const t = text.toLowerCase().trim().replace(/[.,!?]/g, '');
             const w = this.WORDS[lang] || this.WORDS.en;
-            // Direct number
-            if (/^\d+$/.test(t)) return parseInt(t, 10);
-            // Single word (0-19)
-            const onesIdx = w.ones.findIndex(word => t === word || t.includes(word));
-            if (onesIdx >= 0 && onesIdx < 20) return onesIdx;
+            // Direct number anywhere in text
+            const numMatch = t.match(/\d+/);
+            if (numMatch) return parseInt(numMatch[0], 10);
+            // Exact match for ones (0-19)
+            for (let i = 0; i < 20; i++) {
+                if (t === w.ones[i] || t.split(/\s+/).includes(w.ones[i])) return i;
+            }
             // Tens (20-99)
             for (let i = 2; i < 10; i++) {
                 if (t.includes(w.tens[i])) {
-                    const remainder = t.replace(w.tens[i], '').replace(w.sep, '').trim();
-                    const ones = remainder ? w.ones.indexOf(remainder) : 0;
-                    return i * 10 + (ones > 0 ? ones : 0);
+                    let ones = 0;
+                    for (let j = 1; j < 10; j++) {
+                        if (t.includes(w.ones[j])) { ones = j; break; }
+                    }
+                    return i * 10 + ones;
                 }
             }
             // Hundred
             if (t.includes(w.hundred.split(' ').pop())) return 100;
+            // Fuzzy match - try to find any number word
+            for (let i = 0; i < 20; i++) {
+                if (t.includes(w.ones[i])) return i;
+            }
             return null;
         }
     }
@@ -903,8 +912,8 @@
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 this.recognition = new SpeechRecognition();
                 this.recognition.continuous = false;
-                this.recognition.interimResults = false;
-                this.recognition.maxAlternatives = 3;
+                this.recognition.interimResults = true;
+                this.recognition.maxAlternatives = 5;
                 this.recognition.onresult = e => this.handleResult(e);
                 this.recognition.onend = () => this.stop();
                 this.recognition.onerror = () => this.stop();
@@ -925,14 +934,25 @@
         }
 
         handleResult(event) {
-            for (const result of event.results) {
-                for (const alt of result) {
-                    const num = NumberWords.parse(alt.transcript, this.state.voiceLanguage);
-                    if (num !== null && num >= 0 && num <= 100) {
+            const lastResult = event.results[event.results.length - 1];
+            const isFinal = lastResult.isFinal;
+            // Try all alternatives
+            for (const alt of lastResult) {
+                const num = NumberWords.parse(alt.transcript, this.state.voiceLanguage);
+                if (num !== null && num >= 0 && num <= 100) {
+                    if (isFinal) {
                         this.onResult(String(num));
-                        return;
+                    } else {
+                        // Show interim result in display
+                        Utility.$('display-answer').textContent = String(num);
                     }
+                    return;
                 }
+            }
+            // Fallback for final: try to find any digits
+            if (isFinal && lastResult.length > 0) {
+                const digits = lastResult[0].transcript.match(/\d+/);
+                if (digits) this.onResult(digits[0]);
             }
         }
     }
