@@ -915,6 +915,7 @@
             this.onStart = callbacks.onStart;
             this.onStop = callbacks.onStop;
             this.listening = false;
+            this.starting = false;
             this.lastRecognized = null;
             this.manualStop = false;
             const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -925,6 +926,7 @@
             this.recognition.interimResults = true;
             this.recognition.maxAlternatives = 3;
             this.recognition.onstart = () => {
+                this.starting = false;
                 this.listening = true;
                 this.onStart?.();
             };
@@ -943,6 +945,7 @@
             this.recognition.onend = () => {
                 const wasManual = this.manualStop;
                 const result = this.lastRecognized;
+                this.starting = false;
                 this.listening = false;
                 this.manualStop = false;
                 this.lastRecognized = null;
@@ -952,6 +955,7 @@
                 }
             };
             this.recognition.onerror = e => {
+                this.starting = false;
                 this.listening = false;
                 this.manualStop = false;
                 if (e.error !== 'aborted' && e.error !== 'no-speech') {
@@ -961,24 +965,26 @@
         }
 
         start() {
-            if (!this.supported || this.listening) return false;
+            if (!this.supported || this.listening || this.starting) return false;
             this.lastRecognized = null;
             this.manualStop = false;
+            this.starting = true;
             this.recognition.lang = this.state.voiceLanguage === 'uk' ? 'uk-UA' : 'en-US';
             try {
                 this.recognition.start();
                 return true;
             } catch (e) {
+                this.starting = false;
                 return false;
             }
         }
 
         stop() {
-            if (!this.listening) return;
+            if (!this.listening && !this.starting) return;
             this.manualStop = true;
-            try { this.recognition.abort(); } catch (e) {}
+            this.starting = false;
             this.listening = false;
-            this.onStop?.();
+            try { this.recognition.abort(); } catch (e) {}
         }
     }
 
@@ -1288,8 +1294,17 @@
 
         autoStartMic(retries = 3) {
             if (!this.recognizer?.supported || this.state.isProcessing) return;
-            if (this.recognizer.start()) return;
-            if (retries > 0) setTimeout(() => this.autoStartMic(retries - 1), 150);
+            this.recognizer.stop();
+            this.ui.setMicListening(true);
+            setTimeout(() => {
+                if (this.state.isProcessing) { this.ui.setMicListening(false); return; }
+                if (this.recognizer.start()) return;
+                if (retries > 0) {
+                    setTimeout(() => this.autoStartMic(retries - 1), 300);
+                } else {
+                    this.ui.setMicListening(false);
+                }
+            }, 200);
         }
 
         async checkAnswer() {
@@ -1395,7 +1410,12 @@
                 return;
             }
             this.speech.cancel();
-            this.recognizer.start();
+            this.recognizer.stop();
+            this.ui.setMicListening(true);
+            setTimeout(() => {
+                if (this.recognizer.start()) return;
+                this.ui.setMicListening(false);
+            }, 100);
         }
 
         handleVoiceStart() { this.ui.setMicListening(true); }
