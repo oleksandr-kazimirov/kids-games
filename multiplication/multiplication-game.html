@@ -902,9 +902,11 @@
     // =========================================================================
 
     class SpeechRecognitionService {
-        constructor(state, onResult) {
+        constructor(state, callbacks) {
             this.state = state;
-            this.onResult = onResult;
+            this.onResult = callbacks.onResult;
+            this.onInterim = callbacks.onInterim;
+            this.onStop = callbacks.onStop;
             this.recognition = null;
             this.isListening = false;
             this.supported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
@@ -930,26 +932,19 @@
 
         stop() {
             this.isListening = false;
-            Utility.$('btn-mic')?.classList.remove('listening');
+            this.onStop?.();
         }
 
         handleResult(event) {
             const lastResult = event.results[event.results.length - 1];
             const isFinal = lastResult.isFinal;
-            // Try all alternatives
             for (const alt of lastResult) {
                 const num = NumberWords.parse(alt.transcript, this.state.voiceLanguage);
                 if (num !== null && num >= 0 && num <= 100) {
-                    if (isFinal) {
-                        this.onResult(String(num));
-                    } else {
-                        // Show interim result in display
-                        Utility.$('display-answer').textContent = String(num);
-                    }
+                    isFinal ? this.onResult(String(num)) : this.onInterim?.(String(num));
                     return;
                 }
             }
-            // Fallback for final: try to find any digits
             if (isFinal && lastResult.length > 0) {
                 const digits = lastResult[0].transcript.match(/\d+/);
                 if (digits) this.onResult(digits[0]);
@@ -1207,6 +1202,8 @@
 
         resetAnswerDisplay() { const el = Utility.$('display-answer'); el.textContent = ''; el.className = 'answer-display'; }
 
+        updateAnswerDisplay(value) { const el = Utility.$('display-answer'); el.textContent = value; el.className = 'answer-display'; }
+
         generateButtons(containerId, onClick) {
             Utility.$(containerId).innerHTML = Array.from({length: CONFIG.GAME.MAX_NUMBER - CONFIG.GAME.MIN_NUMBER + 1}, (_, i) => `<button class="number-btn" data-num="${i + CONFIG.GAME.MIN_NUMBER}">${i + CONFIG.GAME.MIN_NUMBER}</button>`).join('');
             Utility.$(containerId).querySelectorAll('.number-btn').forEach(btn => btn.addEventListener('click', () => onClick(parseInt(btn.dataset.num))));
@@ -1349,9 +1346,17 @@
         handleVoiceResult(value) {
             if (this.state.isProcessing) return;
             this.state.currentAnswer = value;
-            Utility.$('display-answer').textContent = value;
-            Utility.$('display-answer').className = 'answer-display';
+            this.ui.updateAnswerDisplay(value);
             this.checkAnswer();
+        }
+
+        handleVoiceInterim(value) {
+            if (this.state.isProcessing) return;
+            this.ui.updateAnswerDisplay(value);
+        }
+
+        handleVoiceStop() {
+            Utility.$('btn-mic')?.classList.remove('listening');
         }
 
         startListening() {
@@ -1374,7 +1379,11 @@
             this.speech = new SpeechService(this.state);
             this.ui = new UIController(this.state, this.speech);
             this.game = new GameController(this.state, this.ui, this.speech);
-            this.recognizer = new SpeechRecognitionService(this.state, v => this.game.handleVoiceResult(v));
+            this.recognizer = new SpeechRecognitionService(this.state, {
+                onResult: v => this.game.handleVoiceResult(v),
+                onInterim: v => this.game.handleVoiceInterim(v),
+                onStop: () => this.game.handleVoiceStop()
+            });
             this.game.setRecognizer(this.recognizer);
         }
 
