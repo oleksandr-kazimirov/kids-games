@@ -46,3 +46,80 @@ gh release create v1.2.0 --title "v1.2.0 - New features" --notes "What changed..
 ### Live URL
 
 After deployment: https://oleksandr-kazimirov.github.io/kids-games/multiplication/multiplication-game.html
+
+---
+
+## How Git Releases Work
+
+### What is a Release?
+
+A **release** is a snapshot of your code at a specific point, marked with a **tag** (like `v1.0.0`). Think of it as:
+
+```
+Commits:  A → B → C → D → E → F → G  (continuous development)
+                      ↑           ↑
+Tags:                v1.0.0     v1.1.0  (stable milestones)
+```
+
+### Tags vs Releases
+
+| Concept | What it is |
+|---------|------------|
+| **Tag** | A label pointing to a specific commit (Git feature) |
+| **Release** | A GitHub feature that wraps a tag with title, notes, and downloadable files |
+
+### Creating a Release
+
+**Using GitHub CLI:**
+```bash
+# Basic release
+gh release create v1.0.0
+
+# With title and notes
+gh release create v1.1.0 --title "v1.1.0 - Bug fixes" --notes "Fixed voice button issue"
+
+# From a specific commit
+gh release create v1.2.0 --target abc123
+```
+
+**On GitHub website:**
+1. Go to repository → Releases → "Create a new release"
+2. Enter tag (e.g., `v1.0.0`)
+3. Add title and description
+4. Click "Publish release"
+
+### Version Numbering (Semantic Versioning)
+
+Format: `vMAJOR.MINOR.PATCH`
+
+| Change type | Example | When to use |
+|-------------|---------|-------------|
+| **MAJOR** | v1.0.0 → v2.0.0 | Breaking changes |
+| **MINOR** | v1.0.0 → v1.1.0 | New features (backward compatible) |
+| **PATCH** | v1.0.0 → v1.0.1 | Bug fixes |
+
+### Useful Commands
+
+```bash
+# List all releases
+gh release list
+
+# View a specific release
+gh release view v1.0.0
+
+# Delete a release
+gh release delete v1.0.0
+
+# List all tags
+git tag
+
+# See which commit a tag points to
+git show v1.0.0
+```
+
+### Why Use Releases?
+
+1. **Stable deployments** - Only deploy tested, approved versions
+2. **Rollback** - Easy to redeploy a previous version
+3. **Changelog** - Document what changed in each version
+4. **Distribution** - Users can download specific versions
