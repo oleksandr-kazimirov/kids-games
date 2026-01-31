@@ -924,14 +924,22 @@
 
         start() {
             if (!this.supported || this.isListening) return false;
-            this.recognition.lang = this.state.voiceLanguage === 'uk' ? 'uk-UA' : 'en-US';
-            this.isListening = true;
-            this.recognition.start();
-            return true;
+            try {
+                this.recognition.lang = this.state.voiceLanguage === 'uk' ? 'uk-UA' : 'en-US';
+                this.isListening = true;
+                this.recognition.start();
+                return true;
+            } catch (e) {
+                this.isListening = false;
+                return false;
+            }
         }
 
         stop() {
-            this.isListening = false;
+            if (this.isListening) {
+                this.isListening = false;
+                try { this.recognition.abort(); } catch (e) {}
+            }
             this.onStop?.();
         }
 
@@ -1249,10 +1257,13 @@
         }
 
         autoStartMic() {
-            if (this.recognizer?.supported && !this.state.isProcessing) {
-                Utility.$('btn-mic').classList.add('listening');
-                this.recognizer.start();
-            }
+            if (!this.recognizer?.supported || this.state.isProcessing) return;
+            this.recognizer.stop();
+            setTimeout(() => {
+                if (!this.state.isProcessing && this.recognizer.start()) {
+                    Utility.$('btn-mic').classList.add('listening');
+                }
+            }, 100);
         }
 
         async checkAnswer() {
@@ -1345,6 +1356,7 @@
 
         handleVoiceResult(value) {
             if (this.state.isProcessing) return;
+            this.recognizer?.stop();
             this.state.currentAnswer = value;
             this.ui.updateAnswerDisplay(value);
             this.checkAnswer();
