@@ -686,7 +686,20 @@
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 const language = lang || State.voiceLanguage;
-                utterance.lang = language === 'uk' ? 'uk-UA' : 'en-US';
+                const targetLang = language === 'uk' ? 'uk' : 'en';
+
+                // Find the best matching voice
+                const voices = window.speechSynthesis.getVoices();
+                const voice = voices.find(v => v.lang.startsWith(targetLang)) ||
+                              voices.find(v => v.lang.includes(targetLang));
+
+                if (voice) {
+                    utterance.voice = voice;
+                    utterance.lang = voice.lang;
+                } else {
+                    utterance.lang = language === 'uk' ? 'uk-UA' : 'en-US';
+                }
+
                 utterance.rate = 0.9;
                 utterance.pitch = 1.1;
                 window.speechSynthesis.speak(utterance);
@@ -736,16 +749,16 @@
 
             if (State.gameMode === 'result') {
                 return lang === 'uk'
-                    ? `${a} на ${b}`
+                    ? `${a} помножити на ${b}`
                     : `${a} times ${b}`;
             } else {
                 if (problem.hidden === 'a') {
                     return lang === 'uk'
-                        ? `Що на ${b} дорівнює ${result}`
+                        ? `Що помножити на ${b} дорівнює ${result}`
                         : `What times ${b} equals ${result}`;
                 } else {
                     return lang === 'uk'
-                        ? `${a} на що дорівнює ${result}`
+                        ? `${a} помножити на що дорівнює ${result}`
                         : `${a} times what equals ${result}`;
                 }
             }
@@ -1341,6 +1354,14 @@
         // Initialize displays
         UI.updateComboCount();
     };
+
+    // Load voices (they load asynchronously)
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
+    }
 
     // Start the app
     init();
